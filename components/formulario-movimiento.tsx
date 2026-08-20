@@ -1,0 +1,306 @@
+"use client";
+
+import { useActionState, useMemo, useState } from "react";
+import { crearMovimiento, confirmarPago, type MovimientoFormState } from "@/app/(app)/movimientos/actions";
+import { numeroALetras, money, fmtDate, todayISO } from "@/lib/calculos";
+import { nombreCompleto } from "@/lib/terceros";
+import type { Cuenta, CampoExtra, Tercero, TipoMovimiento } from "@/lib/types";
+
+// Campos dinámicos leídos desde tipos_movimiento.campos_extra (jsonb).
+// Nunca agregar un `if (tipo === 'Cheque')` aquí: una forma de pago nueva es
+// una fila nueva en tipos_movimiento, no un cambio en este componente.
+function CamposExtraFields({ campos }: { campos: CampoExtra[] }) {
+  if (!campos.length) return null;
+  return (
+    <>
+      {campos.map((c) => (
+        <div className="field" key={c.clave}>
+          <label className={"flabel" + (c.requerido ? " flabel-req" : "")} htmlFor={`campo__${c.clave}`}>
+            {c.etiqueta}
+          </label>
+          <input
+            id={`campo__${c.clave}`}
+            name={`campo__${c.clave}`}
+            type={c.tipo === "number" ? "number" : c.tipo === "date" ? "date" : "text"}
+            required={c.requerido}
+            className="finput"
+          />
+        </div>
+      ))}
+    </>
+  );
+}
+
+type Props =
+  | {
+      modo: "crear";
+      tipo: "ingreso" | "egreso";
+      tiposMovimiento: TipoMovimiento[];
+      cuentas: Cuenta[];
+      terceros?: Pick<Tercero, "id" | "nombre" | "apellido">[];
+      terceroFijo?: Pick<Tercero, "id" | "nombre" | "apellido">;
+      redirectTo: string;
+    }
+  | {
+      modo: "confirmar";
+      tipo: "ingreso" | "egreso";
+      tiposMovimiento: TipoMovimiento[];
+      cuentas: Cuenta[];
+      movimiento: { id: string; monto: number; fecha: string; concepto: string | null };
+      terceroNombre?: string;
+      redirectTo: string;
+    };
+
+export default function FormularioMovimiento(props: Props) {
+  const action = props.modo === "crear" ? crearMovimiento : confirmarPago;
+  const [state, formAction, pending] = useActionState<MovimientoFormState, FormData>(action, null);
+
+  const [tipoMovimientoId, setTipoMovimientoId] = useState("");
+  const tipoSeleccionado = useMemo(
+    () => props.tiposMovimiento.find((t) => t.id === tipoMovimientoId) ?? null,
+    [props.tiposMovimiento, tipoMovimientoId]
+  );
+
+  const [monto, setMonto] = useState(props.modo === "confirmar" ? String(props.movimiento.monto) : "");
+  const [confirmarAhora, setConfirmarAhora] = useState(true);
+  const [descuento, setDescuento] = useState("");
+
+  const letras = (() => {
+    const v = parseFloat(monto);
+    return !isNaN(v) && v >= 0 ? numeroALetras(v) : "—";
+  })();
+
+  const esEgreso = props.tipo === "egreso";
+  const requiereCuentaYFecha = props.modo === "confirmar" || props.tipo === "ingreso" || confirmarAhora;
+  // El descuento solo tiene sentido en el momento de pagar un egreso (a un
+  // proveedor, servicios prestados o personal afiliado): confirmando un
+  // pendiente, o creando uno que se paga de inmediato.
+  const mostrarDescuento = esEgreso && (props.modo === "confirmar" || confirmarAhora);
+  const montoBase = props.modo === "confirmar" ? props.movimiento.monto : parseFloat(monto) || 0;
+  const valorAPagar = Math.max(0, montoBase - (parseFloat(descuento) || 0));
+
+  return (
+    <div className="card">
+      <div className="card-h">
+        <h2>{props.modo === "confirmar" ? "Registrar pago" : props.tipo === "ingreso" ? "Nuevo ingreso" : "Nuevo egreso"}</h2>
+      </div>
+      <div className="card-b">
+        <form action={formAction} className="flex flex-col">
+          <input type="hidden" name="tipo" value={props.tipo} />
+          <input type="hidden" name="redirect_to" value={props.redirectTo} />
+          {props.modo === "confirmar" && <input type="hidden" name="movimiento_id" value={props.movimiento.id} />}
+
+          {props.modo === "confirmar" && (
+            <div className="letras-box mb-3.5">
+              {props.terceroNombre && (
+                <div>
+                  <b>{props.terceroNombre}</b>
+                </div>
+              )}
+              <div>Fecha del cargo: {fmtDate(props.movimiento.fecha)}</div>
+              <div>
+                Monto: <b>{money(props.movimiento.monto)}</b>
+              </div>
+              {props.movimiento.concepto && <div>{props.movimiento.concepto}</div>}
+            </div>
+          )}
+
+          {props.modo === "crear" && props.terceroFijo && (
+            <div className="fhint mb-2">
+              Para: <b>{nombreCompleto(props.terceroFijo)}</b>
+            </div>
+          )}
+
+          <div className="field">
+            <label className="flabel flabel-req" htmlFor="tipo_movimiento_id">
+              {props.modo === "confirmar" ? "Forma de pago" : "Tipo de movimiento"}
+            </label>
+            <select
+              id="tipo_movimiento_id"
+              name="tipo_movimiento_id"
+              required
+              value={tipoMovimientoId}
+              onChange={(e) => setTipoMovimientoId(e.target.value)}
+              className="finput"
+            >
+              <option value="">— Selecciona —</option>
+              {props.tiposMovimiento.map((tm) => (
+                <option key={tm.id} value={tm.id}>
+                  {tm.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {props.modo === "crear" && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="field">
+                  <label className="flabel flabel-req" htmlFor="fecha">
+                    Fecha
+                  </label>
+                  <input id="fecha" name="fecha" type="date" required defaultValue={todayISO()} className="finput" />
+                </div>
+                <div className="field">
+                  <label className="flabel flabel-req" htmlFor="monto">
+                    Valor (USD)
+                  </label>
+                  <input
+                    id="monto"
+                    name="monto"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    value={monto}
+                    onChange={(e) => setMonto(e.target.value)}
+                    className="finput"
+                  />
+                </div>
+              </div>
+              <div className="letras-box mono mb-3.5">{letras}</div>
+
+              {!props.terceroFijo && (
+                <div className="field">
+                  <label className="flabel" htmlFor="tercero_id">
+                    {props.tipo === "ingreso" ? "Quién paga (opcional)" : "A favor de (opcional)"}
+                  </label>
+                  <select id="tercero_id" name="tercero_id" className="finput">
+                    <option value="">— Ninguno —</option>
+                    {(props.terceros ?? []).map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {nombreCompleto(t)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {props.terceroFijo && <input type="hidden" name="tercero_id" value={props.terceroFijo.id} />}
+
+              {esEgreso && (
+                <div className="field">
+                  <label className="flabel">¿Ya se pagó?</label>
+                  <div className="flex gap-4 flex-wrap text-[12.5px] font-semibold text-[#33415c]">
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="confirmar_ahora"
+                        value="si"
+                        checked={confirmarAhora}
+                        onChange={() => setConfirmarAhora(true)}
+                      />
+                      Sí, pagar ahora
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="confirmar_ahora"
+                        value="no"
+                        checked={!confirmarAhora}
+                        onChange={() => setConfirmarAhora(false)}
+                      />
+                      No, queda pendiente
+                    </label>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {requiereCuentaYFecha && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="field">
+                <label className="flabel flabel-req" htmlFor="cuenta_id">
+                  Cuenta
+                </label>
+                <select id="cuenta_id" name="cuenta_id" required className="finput">
+                  <option value="">— Selecciona —</option>
+                  {props.cuentas.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.empresa} — {c.banco} {c.numero}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <label className="flabel flabel-req" htmlFor="fecha_pago">
+                  Fecha de pago
+                </label>
+                <input id="fecha_pago" name="fecha_pago" type="date" required defaultValue={todayISO()} className="finput" />
+              </div>
+            </div>
+          )}
+
+          {tipoSeleccionado && <CamposExtraFields campos={tipoSeleccionado.campos_extra} />}
+
+          {mostrarDescuento && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="field">
+                  <label className="flabel" htmlFor="descuento">
+                    Descuento (USD)
+                  </label>
+                  <input
+                    id="descuento"
+                    name="descuento"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    value={descuento}
+                    onChange={(e) => setDescuento(e.target.value)}
+                    className="finput"
+                  />
+                  <div className="fhint">Opcional, solo si hay que descontar algo del valor.</div>
+                </div>
+                <div className="field">
+                  <label className="flabel" htmlFor="observaciones">
+                    Observaciones
+                  </label>
+                  <input
+                    id="observaciones"
+                    name="observaciones"
+                    type="text"
+                    placeholder="Motivo del descuento…"
+                    className="finput"
+                  />
+                </div>
+              </div>
+              {parseFloat(descuento) > 0 && (
+                <div className="letras-box mb-3.5">
+                  Valor original: <b>{money(montoBase)}</b> · Descuento: <b>{money(parseFloat(descuento) || 0)}</b> · Valor a
+                  pagar: <b>{money(valorAPagar)}</b>
+                </div>
+              )}
+            </>
+          )}
+
+          <div className="field">
+            <label className="flabel" htmlFor="concepto">
+              Concepto
+            </label>
+            <input
+              id="concepto"
+              name="concepto"
+              type="text"
+              defaultValue={props.modo === "confirmar" ? props.movimiento.concepto ?? "" : ""}
+              className="finput"
+            />
+          </div>
+
+          {state?.error && (
+            <div className="text-[13px] font-semibold text-danger bg-[#fbeaea] border border-[#f3d3d3] rounded-lg px-3 py-2 mb-3.5">
+              {state.error}
+            </div>
+          )}
+
+          <div className="flex gap-2.5 flex-wrap mt-1.5">
+            <button type="submit" disabled={pending} className="btn-primary">
+              {pending ? "Guardando…" : props.modo === "confirmar" ? "Registrar pago" : "Guardar"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

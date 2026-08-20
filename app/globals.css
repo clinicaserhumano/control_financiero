@@ -1,26 +1,265 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-carbon: #2b2420;
+  --color-carbon-2: #3d332c;
+  --color-primary: #fc6b12;
+  --color-primary-dark: #d8560a;
+  --color-amber: #fdb44b;
+  --color-paper: #f6f5f0;
+  --color-surface: #ffffff;
+  --color-border: #e4e2d9;
+  --color-ink: #2b2420;
+  --color-muted: #6b7280;
+  --color-danger: #c0392b;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-carbon: var(--color-carbon);
+  --color-carbon-2: var(--color-carbon-2);
+  --color-primary: var(--color-primary);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-amber: var(--color-amber);
+  --color-paper: var(--color-paper);
+  --color-surface: var(--color-surface);
+  --color-border: var(--color-border);
+  --color-ink: var(--color-ink);
+  --color-muted: var(--color-muted);
+  --color-danger: var(--color-danger);
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@layer components {
+  /* ---------- Botones ---------- */
+  .btn,
+  .btn-primary,
+  .btn-navy,
+  .btn-ghost,
+  .btn-gold,
+  .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+  }
+  .btn:disabled,
+  .btn-primary:disabled,
+  .btn-navy:disabled,
+  .btn-ghost:disabled,
+  .btn-gold:disabled,
+  .btn-danger:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .btn-primary {
+    background: var(--color-primary);
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: var(--color-primary-dark);
+  }
+  .btn-navy {
+    background: var(--color-carbon);
+    color: #fff;
+  }
+  .btn-navy:hover {
+    background: var(--color-carbon-2);
+  }
+  .btn-ghost {
+    background: #eef0f4;
+    color: var(--color-carbon);
+  }
+  .btn-ghost:hover {
+    background: #e2e6ee;
+  }
+  .btn-gold {
+    background: var(--color-amber);
+    color: #3a2e05;
+  }
+  .btn-gold:hover {
+    filter: brightness(0.96);
+  }
+  .btn-danger {
+    background: #fbeaea;
+    color: var(--color-danger);
+  }
+  .btn-danger:hover {
+    background: #f6dada;
+  }
+  .btn-sm {
+    padding: 6px 11px;
+    font-size: 12px;
+    border-radius: 6px;
+  }
+
+  /* ---------- Cards ---------- */
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(43, 36, 32, 0.06), 0 6px 24px rgba(43, 36, 32, 0.06);
+  }
+  .card-h {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card-h h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-carbon);
+  }
+  .card-b {
+    padding: 18px;
+  }
+
+  /* ---------- Formularios ---------- */
+  .field {
+    margin-bottom: 14px;
+  }
+  .flabel {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #33415c;
+    margin: 0 0 6px;
+  }
+  .flabel-req::after {
+    content: " *";
+    color: var(--color-danger);
+  }
+  .finput {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    background: #fff;
+    outline: none;
+  }
+  .finput:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 0;
+    border-color: var(--color-primary);
+  }
+  .fhint {
+    font-size: 11px;
+    color: var(--color-muted);
+    margin-top: 4px;
+  }
+  .letras-box {
+    background: #f8f7f2;
+    border: 1px dashed var(--color-border);
+    border-radius: 8px;
+    padding: 8px 11px;
+    font-size: 12px;
+    color: #33415c;
+    min-height: 34px;
+  }
+
+  /* ---------- Tablas ---------- */
+  .table-base {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .table-base thead th {
+    text-align: left;
+    background: #f4f5f8;
+    color: #475069;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .table-base tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f0efe9;
+    vertical-align: top;
+  }
+  .table-base tbody tr:hover {
+    background: #fafbfc;
+  }
+  .td-num {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--color-muted);
+  }
+
+  /* ---------- Stats ---------- */
+  .stat {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 2px rgba(43, 36, 32, 0.06), 0 6px 24px rgba(43, 36, 32, 0.06);
+  }
+  .stat .lbl {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-muted);
+    font-weight: 700;
+  }
+  .stat .val {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--color-carbon);
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pill {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    background: #eef6f4;
+    color: var(--color-primary-dark);
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
 }
