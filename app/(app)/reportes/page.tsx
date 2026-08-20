@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { movimientosConSaldo, money, totalPorTipoEstado } from "@/lib/calculos";
+import { movimientosConSaldo, saldoCuenta, money, totalPorTipoEstado } from "@/lib/calculos";
 import type { Cuenta, MovimientoFinanciero, Tercero } from "@/lib/types";
+
+type ModoReporte = "cuenta" | "tercero" | "general";
 
 export default async function ReportesPage({
   searchParams,
@@ -9,7 +11,7 @@ export default async function ReportesPage({
   searchParams: Promise<{ modo?: string; id?: string; desde?: string; hasta?: string }>;
 }) {
   const sp = await searchParams;
-  const modo = sp.modo === "tercero" ? "tercero" : "cuenta";
+  const modo: ModoReporte = sp.modo === "tercero" ? "tercero" : sp.modo === "general" ? "general" : "cuenta";
   const supabase = await createClient();
 
   const [{ data: cuentas }, { data: terceros }] = await Promise.all([
@@ -47,14 +49,39 @@ export default async function ReportesPage({
         { label: "Saldo x pagar", valor: money(totalPorTipoEstado(lista, "egreso", "pendiente")) },
       ],
     };
+  } else if (modo === "general") {
+    const { data: movimientos } = await supabase.from("movimientos_financieros").select("tipo,estado,monto,fecha,creado_en,cuenta_id");
+    const lista = (movimientos ?? []) as (MovimientoFinanciero & { cuenta_id: string | null })[];
+    const enRango = lista.filter((m) => (!sp.desde || m.fecha >= sp.desde) && (!sp.hasta || m.fecha <= sp.hasta));
+
+    const porCuenta = new Map<string, MovimientoFinanciero[]>();
+    lista.forEach((m) => {
+      if (!m.cuenta_id) return;
+      const arr = porCuenta.get(m.cuenta_id) ?? [];
+      arr.push(m);
+      porCuenta.set(m.cuenta_id, arr);
+    });
+    let saldoTotal = 0;
+    for (const movs of porCuenta.values()) saldoTotal += saldoCuenta(movs);
+
+    resumen = {
+      etiquetas: [
+        { label: "Ingresos del período", valor: money(totalPorTipoEstado(enRango, "ingreso", "confirmado")) },
+        { label: "Egresos del período", valor: money(totalPorTipoEstado(enRango, "egreso", "confirmado")) },
+        { label: "Saldo total en cuentas (actual)", valor: money(saldoTotal) },
+        { label: "Total pendiente por pagar", valor: money(totalPorTipoEstado(enRango, "egreso", "pendiente")) },
+      ],
+    };
   }
 
-  const hrefImprimir = sp.id && `/imprimir/${modo === "cuenta" ? "cuentas" : "terceros"}/${sp.id}`;
+  const hrefImprimir =
+    modo === "general" ? "/imprimir/general" : sp.id && `/imprimir/${modo === "cuenta" ? "cuentas" : "terceros"}/${sp.id}`;
+  const mostrarResumen = modo === "general" || (sp.id && resumen);
 
   return (
     <div>
       <p className="text-[12.5px] text-muted -mt-1.5 mb-[18px]">
-        Genera el reporte de movimientos de una cuenta o de un tercero en un rango de fechas, listo para imprimir en A4.
+        Genera el reporte de una cuenta, de una persona, o el resumen general de todo el sistema, listo para imprimir en A4.
       </p>
 
       <div className="flex gap-1.5 mb-4">
@@ -70,13 +97,19 @@ export default async function ReportesPage({
         >
           Por Personal
         </Link>
+        <Link
+          href="/reportes?modo=general"
+          className={"rounded-[9px] border px-3.5 py-2 text-[12.5px] font-bold " + (modo === "general" ? "bg-carbon border-carbon text-white" : "bg-surface border-border text-[var(--color-muted)] hover:border-primary")}
+        >
+          General (todo)
+        </Link>
       </div>
 
       <div className="card">
         <div className="card-b">
           <form method="get" className="flex gap-3 flex-wrap items-end">
             <input type="hidden" name="modo" value={modo} />
-            {modo === "cuenta" ? (
+            {modo === "cuenta" && (
               <div className="field mb-0" style={{ minWidth: 240 }}>
                 <label className="flabel flabel-req">Cuenta</label>
                 <select name="id" defaultValue={sp.id || ""} className="finput">
@@ -88,7 +121,8 @@ export default async function ReportesPage({
                   ))}
                 </select>
               </div>
-            ) : (
+            )}
+            {modo === "tercero" && (
               <div className="field mb-0" style={{ minWidth: 240 }}>
                 <label className="flabel flabel-req">Personal</label>
                 <select name="id" defaultValue={sp.id || ""} className="finput">
@@ -100,6 +134,11 @@ export default async function ReportesPage({
                   ))}
                 </select>
               </div>
+            )}
+            {modo === "general" && (
+              <p className="fhint mb-0" style={{ minWidth: 240 }}>
+                Resumen de todas las cuentas y todo el personal con saldo pendiente.
+              </p>
             )}
             <div className="field mb-0">
               <label className="flabel">Desde</label>
@@ -114,7 +153,7 @@ export default async function ReportesPage({
             </button>
           </form>
 
-          {sp.id && resumen && (
+          {mostrarResumen && resumen && (
             <div className="mt-5">
               <div className="grid grid-cols-2 gap-3.5 mb-4">
                 {resumen.etiquetas.map((e) => (
