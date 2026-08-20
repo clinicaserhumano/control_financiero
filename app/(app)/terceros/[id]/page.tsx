@@ -27,7 +27,7 @@ export default async function TerceroDetallePage({
   const { data: tercero } = await supabase.from("terceros").select("*").eq("id", id).single();
   if (!tercero) notFound();
 
-  const direccion = direccionParaTercero(tercero.tipo);
+  const direccion = direccionParaTercero();
   // "Servicios prestados" = terceros tipo 'empleado' con sueldo asignado (ver lib/terceros.ts).
   const tieneBitacora = tercero.tipo === "empleado" && tercero.sueldo != null;
   const subActiva = tieneBitacora && sub !== "movimientos" ? "bitacora" : "movimientos";
@@ -77,9 +77,7 @@ export default async function TerceroDetallePage({
             </div>
           </div>
           <div className="text-right">
-            <div className="text-[11px] uppercase tracking-wide text-muted font-bold">
-              {direccion === "ingreso" ? "Pendiente por cobrar" : "Saldo x pagar"}
-            </div>
+            <div className="text-[11px] uppercase tracking-wide text-muted font-bold">Saldo x pagar</div>
             <div className="text-2xl font-extrabold tabular-nums">{money(pendiente)}</div>
           </div>
           <div className="flex flex-col gap-2">

@@ -71,22 +71,26 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
 
   const supabase = await createClient();
 
-  const [{ data: cuentas }, { data: terceros }, { data: tiposMovimiento }] = await Promise.all([
+  const [{ data: cuentas }, { data: terceros }, { data: tiposMovimiento }, { data: pagadoresRows }] = await Promise.all([
     supabase.from("cuentas").select("*").order("empresa"),
     supabase.from("terceros").select("*").eq("activo", true).order("nombre"),
     supabase.from("tipos_movimiento").select("*").eq("direccion", tipo).eq("activo", true).order("orden"),
+    tipo === "ingreso"
+      ? supabase.from("movimientos_financieros").select("pagador").eq("tipo", "ingreso").not("pagador", "is", null)
+      : Promise.resolve({ data: null }),
   ]);
+  const pagadoresHistoricos = [...new Set((pagadoresRows ?? []).map((r) => r.pagador).filter(Boolean) as string[])].sort();
 
   let query = supabase
     .from("movimientos_financieros")
     .select("*, tipo_movimiento:tipos_movimiento(nombre), tercero:terceros(nombre,apellido), cuenta:cuentas(empresa,banco,numero)")
     .eq("tipo", tipo);
   if (sp.cuenta) query = query.eq("cuenta_id", sp.cuenta);
-  if (sp.tercero) query = query.eq("tercero_id", sp.tercero);
+  if (sp.tercero && tipo === "egreso") query = query.eq("tercero_id", sp.tercero);
   if (sp.tipoMov) query = query.eq("tipo_movimiento_id", sp.tipoMov);
   if (desdeEfectivo) query = query.gte("fecha", desdeEfectivo);
   if (hastaEfectivo) query = query.lte("fecha", hastaEfectivo);
-  if (sp.q) query = query.ilike("concepto", `%${sp.q}%`);
+  if (sp.q) query = tipo === "ingreso" ? query.or(`concepto.ilike.%${sp.q}%,pagador.ilike.%${sp.q}%`) : query.ilike("concepto", `%${sp.q}%`);
   query = query.order("fecha", { ascending: false }).order("creado_en", { ascending: false });
 
   const { data: movimientos } = await query;
@@ -113,6 +117,7 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
           tiposMovimiento={(tiposMovimiento ?? []) as TipoMovimiento[]}
           cuentas={(cuentas ?? []) as Cuenta[]}
           terceros={(terceros ?? []) as Tercero[]}
+          pagadoresHistoricos={pagadoresHistoricos}
           redirectTo={`/movimientos?tipo=${tipo}`}
         />
 
@@ -182,17 +187,19 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                     ))}
                   </select>
                 </div>
-                <div className="field mb-0">
-                  <label className="flabel">Tercero</label>
-                  <select name="tercero" defaultValue={sp.tercero || ""} className="finput">
-                    <option value="">Todos</option>
-                    {(terceros ?? []).map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {nombreCompleto(t)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {tipo === "egreso" && (
+                  <div className="field mb-0">
+                    <label className="flabel">Personal</label>
+                    <select name="tercero" defaultValue={sp.tercero || ""} className="finput">
+                      <option value="">Todos</option>
+                      {(terceros ?? []).map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {nombreCompleto(t)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div className="field mb-0">
                   <label className="flabel">Tipo</label>
                   <select name="tipoMov" defaultValue={sp.tipoMov || ""} className="finput">
@@ -205,7 +212,7 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                   </select>
                 </div>
                 <div className="field mb-0">
-                  <label className="flabel">Buscar concepto</label>
+                  <label className="flabel">{tipo === "ingreso" ? "Buscar pagador / concepto" : "Buscar concepto"}</label>
                   <input type="text" name="q" defaultValue={sp.q || ""} className="finput" />
                 </div>
                 <div className="field mb-0" style={{ maxWidth: 110 }}>
@@ -258,7 +265,7 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                         <tr key={m.id}>
                           <td>{fmtDate(m.fecha)}</td>
                           <td>{m.tipo_movimiento?.nombre || "—"}</td>
-                          <td>{m.tercero ? nombreCompleto(m.tercero) : "—"}</td>
+                          <td>{tipo === "ingreso" ? m.pagador || "—" : m.tercero ? nombreCompleto(m.tercero) : "—"}</td>
                           <td className="text-[12px] text-muted">{m.cuenta ? `${m.cuenta.banco} · ${m.cuenta.numero}` : "—"}</td>
                           <td>
                             <span

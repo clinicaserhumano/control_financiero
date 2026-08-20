@@ -57,7 +57,7 @@ export default async function ImprimirMovimientoPage({ params }: { params: Promi
             <tr>
               <td style={{ width: "62%" }}>
                 <span className="lbl">{esEgreso ? "A favor de (beneficiario)" : "Recibido de"}</span>
-                <span className="v">{m.tercero ? nombreCompleto(m.tercero) : "—"}</span>
+                <span className="v">{esEgreso ? (m.tercero ? nombreCompleto(m.tercero) : "—") : m.pagador || "—"}</span>
               </td>
               <td style={{ width: "38%" }}>
                 <span className="lbl">Fecha</span>

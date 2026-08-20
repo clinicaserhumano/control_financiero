@@ -8,13 +8,16 @@ export const TERCERO_TIPO_LABEL: Record<TerceroTipo, string> = {
   otro: 'Otro',
 };
 
-// Pestañas del módulo /terceros. "Servicios prestados" son terceros tipo
-// 'empleado' que tienen sueldo asignado (se liquidan por bitácora de horas).
+// Pestañas del módulo Personal (antes "Terceros"). "Servicios prestados" son
+// terceros tipo 'empleado' que tienen sueldo asignado (se liquidan por
+// bitácora de horas). No incluye pacientes/clientes: en esta clínica siempre
+// pagan antes de la consulta, así que nunca hay saldo por cobrar que
+// justifique una ficha — quién paga un ingreso es solo un nombre libre
+// (columna `pagador` en movimientos_financieros), no un tercero.
 export const TERCERO_TABS = [
   { grupo: 'proveedor', label: 'Proveedores' },
   { grupo: 'empleado', label: 'Servicios prestados' },
   { grupo: 'afiliado', label: 'Personal afiliado' },
-  { grupo: 'paciente_cliente', label: 'Pacientes / Clientes' },
 ] as const;
 
 export type TerceroGrupo = (typeof TERCERO_TABS)[number]['grupo'];
@@ -23,8 +26,8 @@ export function nombreCompleto(t: { nombre: string; apellido: string | null }): 
   return [t.nombre, t.apellido].filter(Boolean).join(' ').trim();
 }
 
-// Un tercero tipo 'paciente_cliente' es la contraparte de un ingreso;
-// cualquier otro tipo (proveedor, empleado, afiliado) es contraparte de un egreso.
-export function direccionParaTercero(tipo: TerceroTipo): 'ingreso' | 'egreso' {
-  return tipo === 'paciente_cliente' ? 'ingreso' : 'egreso';
+// Todo tercero visible en el módulo Personal es contraparte de un egreso
+// (proveedor, servicios prestados, personal afiliado).
+export function direccionParaTercero(): 'egreso' {
+  return 'egreso';
 }

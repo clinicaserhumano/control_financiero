@@ -39,6 +39,7 @@ type Props =
       cuentas: Cuenta[];
       terceros?: Pick<Tercero, "id" | "nombre" | "apellido">[];
       terceroFijo?: Pick<Tercero, "id" | "nombre" | "apellido">;
+      pagadoresHistoricos?: string[];
       redirectTo: string;
     }
   | {
@@ -160,20 +161,42 @@ export default function FormularioMovimiento(props: Props) {
               </div>
               <div className="letras-box mono mb-3.5">{letras}</div>
 
-              {!props.terceroFijo && (
+              {props.tipo === "ingreso" ? (
                 <div className="field">
-                  <label className="flabel" htmlFor="tercero_id">
-                    {props.tipo === "ingreso" ? "Quién paga (opcional)" : "A favor de (opcional)"}
+                  <label className="flabel" htmlFor="pagador">
+                    Quién paga (opcional)
                   </label>
-                  <select id="tercero_id" name="tercero_id" className="finput">
-                    <option value="">— Ninguno —</option>
-                    {(props.terceros ?? []).map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {nombreCompleto(t)}
-                      </option>
+                  <input
+                    id="pagador"
+                    name="pagador"
+                    type="text"
+                    list="pagadores-datalist"
+                    autoComplete="off"
+                    placeholder="Nombre del paciente / cliente"
+                    className="finput"
+                  />
+                  <datalist id="pagadores-datalist">
+                    {(props.pagadoresHistoricos ?? []).map((p) => (
+                      <option key={p} value={p} />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
+              ) : (
+                !props.terceroFijo && (
+                  <div className="field">
+                    <label className="flabel" htmlFor="tercero_id">
+                      A favor de (opcional)
+                    </label>
+                    <select id="tercero_id" name="tercero_id" className="finput">
+                      <option value="">— Ninguno —</option>
+                      {(props.terceros ?? []).map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {nombreCompleto(t)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )
               )}
               {props.terceroFijo && <input type="hidden" name="tercero_id" value={props.terceroFijo.id} />}
 

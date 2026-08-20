@@ -82,7 +82,7 @@ export default async function ImprimirMovimientosPage({ searchParams }: { search
               <tr key={m.id}>
                 <td>{fmtDate(m.fecha)}</td>
                 <td>{m.tipo_movimiento?.nombre || "—"}</td>
-                <td>{m.tercero ? nombreCompleto(m.tercero) : "—"}</td>
+                <td>{tipo === "ingreso" ? m.pagador || "—" : m.tercero ? nombreCompleto(m.tercero) : "—"}</td>
                 <td>{m.concepto || "—"}</td>
                 <td>{m.cuenta ? `${m.cuenta.banco} · ${m.cuenta.numero}` : "—"}</td>
                 <td>{m.estado === "confirmado" ? "Confirmado" : m.estado === "pendiente" ? "Pendiente" : "Anulado"}</td>

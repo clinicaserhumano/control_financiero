@@ -31,7 +31,7 @@ export default function TerceroForm({
   return (
     <div className="card">
       <div className="card-h">
-        <h2>{terceroEditando ? "Editar tercero" : "Nuevo tercero"}</h2>
+        <h2>{terceroEditando ? "Editar persona" : "Nueva persona"}</h2>
       </div>
       <div className="card-b">
         <form action={formAction} className="flex flex-col">
@@ -176,7 +176,7 @@ export default function TerceroForm({
           )}
           <div className="flex gap-2.5 flex-wrap mt-1.5">
             <button type="submit" disabled={pending} className="btn-primary">
-              {pending ? "Guardando…" : terceroEditando ? "Guardar cambios" : "Guardar tercero"}
+              {pending ? "Guardando…" : terceroEditando ? "Guardar cambios" : "Guardar persona"}
             </button>
             {terceroEditando && (
               <Link href={`/terceros?grupo=${grupoActivo}`} className="btn-ghost">

@@ -111,6 +111,7 @@ export interface Database {
           creado_en: string;
           descuento: number | null;
           observaciones: string | null;
+          pagador: string | null;
         };
         Insert: {
           id?: string;
@@ -130,6 +131,7 @@ export interface Database {
           creado_en?: string;
           descuento?: number | null;
           observaciones?: string | null;
+          pagador?: string | null;
         };
         Update: Partial<Database['public']['Tables']['movimientos_financieros']['Insert']>;
         Relationships: [

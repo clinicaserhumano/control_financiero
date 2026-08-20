@@ -52,7 +52,7 @@ export default async function ImprimirCxPPage({ searchParams }: { searchParams: 
           <thead>
             <tr>
               <th>Fecha</th>
-              <th>Tercero</th>
+              <th>Personal</th>
               <th>Concepto</th>
               <th style={{ textAlign: "right" }}>Valor</th>
             </tr>

@@ -92,7 +92,7 @@ export default async function TercerosPage({
               {visibles.length === 0 ? (
                 <div className="empty-state">
                   <div className="text-[15px] font-semibold text-[#475069] mb-1">Sin registros</div>
-                  No hay terceros en este grupo con el filtro seleccionado.
+                  No hay personal en este grupo con el filtro seleccionado.
                 </div>
               ) : (
                 <div className="overflow-x-auto">

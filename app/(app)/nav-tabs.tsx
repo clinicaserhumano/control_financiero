@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 const TABS = [
   { href: "/cuentas", label: "Cuentas", match: (p: string) => p.startsWith("/cuentas") && !p.startsWith("/cuentas-por-pagar") },
-  { href: "/terceros", label: "Terceros", match: (p: string) => p.startsWith("/terceros") },
+  { href: "/terceros", label: "Personal", match: (p: string) => p.startsWith("/terceros") },
   { href: "/movimientos?tipo=ingreso", label: "Ingresos", match: (p: string, q: string) => p.startsWith("/movimientos") && q === "ingreso" },
   { href: "/movimientos?tipo=egreso", label: "Egresos", match: (p: string, q: string) => p.startsWith("/movimientos") && q !== "ingreso" },
   { href: "/cuentas-por-pagar", label: "Cuentas x Pagar", match: (p: string) => p.startsWith("/cuentas-por-pagar") },

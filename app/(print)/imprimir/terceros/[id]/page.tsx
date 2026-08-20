@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { money, fmtDate, todayISO, totalPorTipoEstado } from "@/lib/calculos";
-import { TERCERO_TIPO_LABEL, nombreCompleto, direccionParaTercero } from "@/lib/terceros";
+import { TERCERO_TIPO_LABEL, nombreCompleto } from "@/lib/terceros";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
 import type { MovimientoFinanciero } from "@/lib/types";
@@ -29,11 +29,10 @@ export default async function ImprimirTerceroPage({
   ]);
   if (!tercero) notFound();
 
-  const direccion = direccionParaTercero(tercero.tipo);
   const lista = (movimientos ?? []) as unknown as MovConNombres[];
   const filas = lista.filter((m) => (!desde || m.fecha >= desde) && (!hasta || m.fecha <= hasta));
-  const pendiente = totalPorTipoEstado(lista, direccion, "pendiente");
-  const confirmado = totalPorTipoEstado(filas, direccion, "confirmado");
+  const pendiente = totalPorTipoEstado(lista, "egreso", "pendiente");
+  const confirmado = totalPorTipoEstado(filas, "egreso", "confirmado");
 
   let periodo = "Todas las fechas";
   if (desde && hasta) periodo = `${fmtDate(desde)} al ${fmtDate(hasta)}`;
@@ -59,11 +58,11 @@ export default async function ImprimirTerceroPage({
         </div>
         <div className="sum">
           <div>
-            {direccion === "ingreso" ? "Cobrado en el período" : "Pagado en el período"}
+            Pagado en el período
             <b>{money(confirmado)}</b>
           </div>
           <div>
-            {direccion === "ingreso" ? "Pendiente por cobrar (total)" : "Saldo x pagar (total)"}
+            Saldo x pagar (total)
             <b>{money(pendiente)}</b>
           </div>
         </div>

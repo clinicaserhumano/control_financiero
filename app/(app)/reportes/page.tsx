@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { movimientosConSaldo, money, totalPorTipoEstado } from "@/lib/calculos";
-import { direccionParaTercero } from "@/lib/terceros";
 import type { Cuenta, MovimientoFinanciero, Tercero } from "@/lib/types";
 
 export default async function ReportesPage({
@@ -36,21 +35,16 @@ export default async function ReportesPage({
       ],
     };
   } else if (sp.id && modo === "tercero") {
-    const { data: tercero } = await supabase.from("terceros").select("*").eq("id", sp.id).single();
     const { data: movimientos } = await supabase
       .from("movimientos_financieros")
       .select("tipo,estado,monto,fecha")
       .eq("tercero_id", sp.id);
     const lista = (movimientos ?? []) as MovimientoFinanciero[];
     const filas = lista.filter((m) => (!sp.desde || m.fecha >= sp.desde) && (!sp.hasta || m.fecha <= sp.hasta));
-    const direccion = tercero ? direccionParaTercero((tercero as Tercero).tipo) : "egreso";
     resumen = {
       etiquetas: [
         { label: "Movimientos en el rango", valor: String(filas.length) },
-        {
-          label: direccion === "ingreso" ? "Pendiente por cobrar" : "Saldo x pagar",
-          valor: money(totalPorTipoEstado(lista, direccion, "pendiente")),
-        },
+        { label: "Saldo x pagar", valor: money(totalPorTipoEstado(lista, "egreso", "pendiente")) },
       ],
     };
   }
@@ -70,7 +64,7 @@ export default async function ReportesPage({
               <label className="flabel">Reportar por</label>
               <select name="modo" defaultValue={modo} className="finput">
                 <option value="cuenta">Cuenta</option>
-                <option value="tercero">Tercero</option>
+                <option value="tercero">Personal</option>
               </select>
             </div>
             {modo === "cuenta" ? (
@@ -87,7 +81,7 @@ export default async function ReportesPage({
               </div>
             ) : (
               <div className="field mb-0" style={{ minWidth: 240 }}>
-                <label className="flabel flabel-req">Tercero</label>
+                <label className="flabel flabel-req">Personal</label>
                 <select name="id" defaultValue={sp.id || ""} className="finput">
                   <option value="">— Selecciona —</option>
                   {(terceros ?? []).map((t: Tercero) => (

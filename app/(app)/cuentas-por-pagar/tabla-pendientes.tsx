@@ -53,7 +53,7 @@ export default function TablaPendientes({ pendientes, cuentas }: { pendientes: P
                 <input type="checkbox" checked={todasSeleccionadas} onChange={toggleTodas} />
               </th>
               <th>Fecha</th>
-              <th>Tercero</th>
+              <th>Personal</th>
               <th>Concepto</th>
               <th className="td-num">Valor</th>
               <th></th>

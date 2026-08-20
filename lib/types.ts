@@ -69,6 +69,10 @@ export interface MovimientoFinanciero {
   // informativo de cuánto se descontó del monto original adeudado.
   descuento: number | null;
   observaciones: string | null;
+  // Ingresos: nombre libre de quién paga (paciente/cliente). No usan
+  // tercero_id porque en esta clínica siempre pagan antes de la consulta —
+  // nunca queda un saldo por cobrar que justifique una ficha propia.
+  pagador: string | null;
 }
 
 export interface DiaSemana {
