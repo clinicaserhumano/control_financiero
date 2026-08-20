@@ -46,6 +46,7 @@ export interface TipoMovimiento {
   campos_extra: CampoExtra[];
   activo: boolean;
   orden: number;
+  requiere_cuenta: boolean;
 }
 
 export interface MovimientoFinanciero {

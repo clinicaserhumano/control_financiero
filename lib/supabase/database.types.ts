@@ -80,6 +80,7 @@ export interface Database {
           campos_extra: { clave: string; etiqueta: string; requerido: boolean; tipo?: string }[];
           activo: boolean;
           orden: number;
+          requiere_cuenta: boolean;
         };
         Insert: {
           id?: string;
@@ -88,6 +89,7 @@ export interface Database {
           campos_extra?: { clave: string; etiqueta: string; requerido: boolean; tipo?: string }[];
           activo?: boolean;
           orden?: number;
+          requiere_cuenta?: boolean;
         };
         Update: Partial<Database['public']['Tables']['tipos_movimiento']['Insert']>;
         Relationships: [];

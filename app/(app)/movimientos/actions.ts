@@ -21,17 +21,16 @@ function leerReferencia(formData: FormData): Record<string, string> {
   return referencia;
 }
 
-async function validarCamposExtra(
-  supabase: SupabaseClient<Database>,
-  tipoMovimientoId: string,
-  referencia: Record<string, string>
-): Promise<string | null> {
-  const { data: tm } = await supabase
+async function obtenerTipoMovimiento(supabase: SupabaseClient<Database>, tipoMovimientoId: string) {
+  const { data } = await supabase
     .from("tipos_movimiento")
-    .select("campos_extra")
+    .select("campos_extra,requiere_cuenta")
     .eq("id", tipoMovimientoId)
     .single();
-  const campos = tm?.campos_extra ?? [];
+  return data ?? { campos_extra: [], requiere_cuenta: true };
+}
+
+function validarCamposExtra(campos: { clave: string; etiqueta: string; requerido: boolean }[], referencia: Record<string, string>): string | null {
   for (const c of campos) {
     if (c.requerido && !referencia[c.clave]) return `Falta el campo "${c.etiqueta}".`;
   }
@@ -89,12 +88,13 @@ export async function crearMovimiento(_prev: MovimientoFormState, formData: Form
   if (!tipoMovimientoId) return { error: "Selecciona el tipo de movimiento." };
   if (isNaN(monto) || monto <= 0) return { error: "Ingresa un monto válido." };
   if (!fecha) return { error: "Ingresa la fecha." };
-  if (confirmarAhora && !cuentaId) return { error: "Selecciona la cuenta." };
 
   const supabase = await createClient();
   const referencia = leerReferencia(formData);
-  const errorCampos = await validarCamposExtra(supabase, tipoMovimientoId, referencia);
+  const tipoMovimiento = await obtenerTipoMovimiento(supabase, tipoMovimientoId);
+  const errorCampos = validarCamposExtra(tipoMovimiento.campos_extra, referencia);
   if (errorCampos) return { error: errorCampos };
+  if (confirmarAhora && tipoMovimiento.requiere_cuenta && !cuentaId) return { error: "Selecciona la cuenta." };
 
   let montoFinal = monto;
   let descuento: number | null = null;
@@ -136,20 +136,21 @@ export async function confirmarPago(_prev: MovimientoFormState, formData: FormDa
 
   const movimientoId = String(formData.get("movimiento_id") || "");
   const tipoMovimientoId = String(formData.get("tipo_movimiento_id") || "");
-  const cuentaId = String(formData.get("cuenta_id") || "");
+  const cuentaId = String(formData.get("cuenta_id") || "") || null;
   const fechaPago = String(formData.get("fecha_pago") || "");
   const concepto = String(formData.get("concepto") || "").trim() || null;
   const redirectTo = String(formData.get("redirect_to") || "/movimientos");
 
   if (!movimientoId) return { error: "Movimiento no encontrado." };
   if (!tipoMovimientoId) return { error: "Selecciona la forma de pago." };
-  if (!cuentaId) return { error: "Selecciona la cuenta." };
   if (!fechaPago) return { error: "Ingresa la fecha de pago." };
 
   const supabase = await createClient();
   const referencia = leerReferencia(formData);
-  const errorCampos = await validarCamposExtra(supabase, tipoMovimientoId, referencia);
+  const tipoMovimiento = await obtenerTipoMovimiento(supabase, tipoMovimientoId);
+  const errorCampos = validarCamposExtra(tipoMovimiento.campos_extra, referencia);
   if (errorCampos) return { error: errorCampos };
+  if (tipoMovimiento.requiere_cuenta && !cuentaId) return { error: "Selecciona la cuenta." };
 
   const { data: original } = await supabase
     .from("movimientos_financieros")

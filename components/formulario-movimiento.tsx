@@ -76,6 +76,10 @@ export default function FormularioMovimiento(props: Props) {
 
   const esEgreso = props.tipo === "egreso";
   const requiereCuentaYFecha = props.modo === "confirmar" || props.tipo === "ingreso" || confirmarAhora;
+  // El efectivo (u otra forma de pago marcada así en tipos_movimiento) no
+  // sale/entra de ninguna cuenta bancaria registrada, así que no debe pedir
+  // seleccionar una — la fecha de pago sigue siendo relevante igual.
+  const requiereCuenta = requiereCuentaYFecha && (tipoSeleccionado?.requiere_cuenta ?? true);
   // El descuento solo tiene sentido en el momento de pagar un egreso (a un
   // proveedor, servicios prestados o personal afiliado): confirmando un
   // pendiente, o creando uno que se paga de inmediato.
@@ -87,7 +91,15 @@ export default function FormularioMovimiento(props: Props) {
   return (
     <div className="card">
       <div className="card-h">
-        <h2>{props.modo === "confirmar" ? "Registrar pago" : props.tipo === "ingreso" ? "Nuevo ingreso" : "Nuevo egreso"}</h2>
+        <h2>
+          {props.modo === "confirmar"
+            ? "Registrar pago"
+            : props.modo === "crear" && props.terceroFijo
+              ? "Movimiento manual"
+              : props.tipo === "ingreso"
+                ? "Nuevo ingreso"
+                : "Nuevo egreso"}
+        </h2>
       </div>
       <div className="card-b">
         <form action={formAction} className="flex flex-col">
@@ -219,7 +231,7 @@ export default function FormularioMovimiento(props: Props) {
               )}
               {props.terceroFijo && <input type="hidden" name="tercero_id" value={props.terceroFijo.id} />}
 
-              {esEgreso && (
+              {esEgreso && !props.terceroFijo && (
                 <div className="field">
                   <label className="flabel">Razón del egreso (opcional)</label>
                   <div className="flex gap-4 flex-wrap text-[12.5px] font-semibold text-[var(--color-ink)]">
@@ -288,25 +300,28 @@ export default function FormularioMovimiento(props: Props) {
           )}
 
           {requiereCuentaYFecha && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="field">
-                <label className="flabel flabel-req" htmlFor="cuenta_id">
-                  Cuenta
-                </label>
-                <select id="cuenta_id" name="cuenta_id" required className="finput">
-                  <option value="">— Selecciona —</option>
-                  {props.cuentas.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.empresa} — {c.banco} {c.numero}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className={requiereCuenta ? "grid grid-cols-2 gap-3" : ""}>
+              {requiereCuenta && (
+                <div className="field">
+                  <label className="flabel flabel-req" htmlFor="cuenta_id">
+                    Cuenta
+                  </label>
+                  <select id="cuenta_id" name="cuenta_id" required className="finput">
+                    <option value="">— Selecciona —</option>
+                    {props.cuentas.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.empresa} — {c.banco} {c.numero}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="field">
                 <label className="flabel flabel-req" htmlFor="fecha_pago">
                   Fecha de pago
                 </label>
                 <input id="fecha_pago" name="fecha_pago" type="date" required defaultValue={todayISO()} className="finput" />
+                {!requiereCuenta && <div className="fhint">En efectivo no se descuenta de ninguna cuenta bancaria.</div>}
               </div>
             </div>
           )}
