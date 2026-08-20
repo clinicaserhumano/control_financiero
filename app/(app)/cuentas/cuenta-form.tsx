@@ -3,10 +3,23 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { guardarCuenta, type CuentaFormState } from "./actions";
+import { useEsAdmin } from "@/lib/auth/role-context";
 import type { Cuenta } from "@/lib/types";
 
 export default function CuentaForm({ cuentaEditando }: { cuentaEditando: Cuenta | null }) {
   const [state, formAction, pending] = useActionState<CuentaFormState, FormData>(guardarCuenta, null);
+  const esAdmin = useEsAdmin();
+
+  if (!esAdmin) {
+    return (
+      <div className="card">
+        <div className="card-h">
+          <h2>{cuentaEditando ? "Editar cuenta" : "Nueva cuenta"}</h2>
+        </div>
+        <div className="card-b fhint">Tu cuenta es de solo lectura: no puedes crear ni editar cuentas.</div>
+      </div>
+    );
+  }
 
   return (
     <div className="card">

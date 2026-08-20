@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import { guardarTercero, type TerceroFormState } from "./actions";
 import { TERCERO_TABS, type TerceroGrupo } from "@/lib/terceros";
+import { useEsAdmin } from "@/lib/auth/role-context";
 import type { Cuenta, Tercero } from "@/lib/types";
 
 export default function TerceroForm({
@@ -21,11 +22,23 @@ export default function TerceroForm({
   const [sueldo, setSueldo] = useState(terceroEditando?.sueldo?.toString() || "");
   const [horas, setHoras] = useState(terceroEditando?.horas?.toString() || "160");
   const [precioHora, setPrecioHora] = useState(terceroEditando?.precio_hora?.toString() || "");
+  const esAdmin = useEsAdmin();
 
   function recalcularPrecio(nuevoSueldo: string, nuevasHoras: string) {
     const s = parseFloat(nuevoSueldo);
     const h = parseFloat(nuevasHoras);
     if (!isNaN(s) && !isNaN(h) && h > 0) setPrecioHora((s / h).toFixed(4));
+  }
+
+  if (!esAdmin) {
+    return (
+      <div className="card">
+        <div className="card-h">
+          <h2>{terceroEditando ? "Editar persona" : "Nueva persona"}</h2>
+        </div>
+        <div className="card-b fhint">Tu cuenta es de solo lectura: no puedes crear ni editar personal.</div>
+      </div>
+    );
   }
 
   return (

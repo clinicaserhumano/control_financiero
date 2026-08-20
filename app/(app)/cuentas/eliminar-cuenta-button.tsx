@@ -2,9 +2,13 @@
 
 import { useTransition } from "react";
 import { eliminarCuenta } from "./actions";
+import { useEsAdmin } from "@/lib/auth/role-context";
 
 export default function EliminarCuentaButton({ id, empresa }: { id: string; empresa: string }) {
   const [pending, startTransition] = useTransition();
+  const esAdmin = useEsAdmin();
+
+  if (!esAdmin) return null;
 
   return (
     <button

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { money, fmtDate, totalPorTipoEstado } from "@/lib/calculos";
 import { TERCERO_TIPO_LABEL, nombreCompleto, direccionParaTercero } from "@/lib/terceros";
+import { rolDe } from "@/lib/auth/roles";
 import type { Cuenta, MovimientoFinanciero, Tercero, TipoMovimiento } from "@/lib/types";
 import FormularioMovimiento from "@/components/formulario-movimiento";
 import ToggleActivoButton from "../toggle-activo-button";
@@ -23,6 +24,10 @@ export default async function TerceroDetallePage({
   const { id } = await params;
   const { sub } = await searchParams;
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const esAdmin = rolDe(user?.email) === "admin";
 
   const { data: tercero } = await supabase.from("terceros").select("*").eq("id", id).single();
   if (!tercero) notFound();
@@ -205,7 +210,7 @@ export default async function TerceroDetallePage({
                             )}
                           </td>
                           <td>
-                            {m.estado === "pendiente" && (
+                            {esAdmin && m.estado === "pendiente" && (
                               <Link href={`/movimientos/${m.id}/pagar?volver=/terceros/${id}`} className="btn-gold btn-sm">
                                 Registrar pago
                               </Link>

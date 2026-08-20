@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 export type CuentaFormState = { error: string } | null;
 
@@ -19,6 +20,9 @@ function leerCampos(formData: FormData) {
 }
 
 export async function guardarCuenta(_prev: CuentaFormState, formData: FormData): Promise<CuentaFormState> {
+  const chk = await requireAdmin();
+  if (!chk.ok) return { error: chk.error };
+
   const editandoId = String(formData.get("id") || "");
   const campos = leerCampos(formData);
 
@@ -41,6 +45,8 @@ export async function guardarCuenta(_prev: CuentaFormState, formData: FormData):
 }
 
 export async function eliminarCuenta(id: string) {
+  const chk = await requireAdmin();
+  if (!chk.ok) return;
   const supabase = await createClient();
   await supabase.from("cuentas").delete().eq("id", id);
   revalidatePath("/cuentas");

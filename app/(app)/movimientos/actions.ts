@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -64,6 +65,9 @@ function revalidarTodo(cuentaId: string | null, terceroId: string | null) {
 }
 
 export async function crearMovimiento(_prev: MovimientoFormState, formData: FormData): Promise<MovimientoFormState> {
+  const chk = await requireAdmin();
+  if (!chk.ok) return { error: chk.error };
+
   const tipo = String(formData.get("tipo") || "") as "ingreso" | "egreso";
   const tipoMovimientoId = String(formData.get("tipo_movimiento_id") || "");
   const terceroId = String(formData.get("tercero_id") || "") || null;
@@ -127,6 +131,9 @@ export async function crearMovimiento(_prev: MovimientoFormState, formData: Form
 }
 
 export async function confirmarPago(_prev: MovimientoFormState, formData: FormData): Promise<MovimientoFormState> {
+  const chk = await requireAdmin();
+  if (!chk.ok) return { error: chk.error };
+
   const movimientoId = String(formData.get("movimiento_id") || "");
   const tipoMovimientoId = String(formData.get("tipo_movimiento_id") || "");
   const cuentaId = String(formData.get("cuenta_id") || "");
@@ -183,6 +190,8 @@ export async function confirmarPago(_prev: MovimientoFormState, formData: FormDa
 }
 
 export async function anularMovimiento(id: string) {
+  const chk = await requireAdmin();
+  if (!chk.ok) return;
   const supabase = await createClient();
   const { data: mov } = await supabase
     .from("movimientos_financieros")

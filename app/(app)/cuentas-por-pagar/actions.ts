@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 function revalidarTodo(terceroIds: (string | null)[]) {
   revalidatePath("/cuentas-por-pagar");
@@ -15,6 +16,9 @@ export type MarcarPagadosState = { error: string } | null;
 // Confirmación masiva "rápida": no pide forma de pago ni campos_extra (eso
 // se hace fila por fila desde "Registrar pago" cuando hace falta el detalle).
 export async function marcarPagadosMasivo(_prev: MarcarPagadosState, formData: FormData): Promise<MarcarPagadosState> {
+  const chk = await requireAdmin();
+  if (!chk.ok) return { error: chk.error };
+
   const ids = formData.getAll("ids").map(String).filter(Boolean);
   const cuentaId = String(formData.get("cuenta_id") || "");
   const fechaPago = String(formData.get("fecha_pago") || "");
@@ -38,6 +42,8 @@ export async function marcarPagadosMasivo(_prev: MarcarPagadosState, formData: F
 }
 
 export async function anularSeleccionados(ids: string[]) {
+  const chk = await requireAdmin();
+  if (!chk.ok) return;
   if (!ids.length) return;
   const supabase = await createClient();
   const { data: afectados } = await supabase.from("movimientos_financieros").select("tercero_id").in("id", ids);

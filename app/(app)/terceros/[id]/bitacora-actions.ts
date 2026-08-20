@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { calcularHorasSemana, todayISO } from "@/lib/calculos";
 import type { DiaSemana } from "@/lib/types";
 
@@ -12,12 +13,16 @@ function semanaVacia(): DiaSemana[] {
 }
 
 export async function agregarSemana(terceroId: string) {
+  const chk = await requireAdmin();
+  if (!chk.ok) return;
   const supabase = await createClient();
   await supabase.from("semanas").insert({ tercero_id: terceroId, etiqueta: "", dias: semanaVacia() });
   revalidatePath(`/terceros/${terceroId}`);
 }
 
 export async function eliminarSemana(semanaId: string, terceroId: string) {
+  const chk = await requireAdmin();
+  if (!chk.ok) return;
   const supabase = await createClient();
   // Solo se permite borrar una semana que todavía no se cargó como cargo
   // (protege el registro financiero una vez que existe un movimiento ligado).
@@ -26,6 +31,8 @@ export async function eliminarSemana(semanaId: string, terceroId: string) {
 }
 
 export async function guardarDiasSemana(semanaId: string, terceroId: string, etiqueta: string, dias: DiaSemana[]) {
+  const chk = await requireAdmin();
+  if (!chk.ok) return;
   const supabase = await createClient();
   await supabase.from("semanas").update({ etiqueta, dias }).eq("id", semanaId);
   revalidatePath(`/terceros/${terceroId}`);
@@ -34,6 +41,9 @@ export async function guardarDiasSemana(semanaId: string, terceroId: string, eti
 export type CargarSemanaState = { error: string } | null;
 
 export async function cargarSemana(_prev: CargarSemanaState, formData: FormData): Promise<CargarSemanaState> {
+  const chk = await requireAdmin();
+  if (!chk.ok) return { error: chk.error };
+
   const semanaId = String(formData.get("semana_id") || "");
   const terceroId = String(formData.get("tercero_id") || "");
   const etiqueta = String(formData.get("etiqueta") || "").trim();

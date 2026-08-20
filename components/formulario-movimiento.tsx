@@ -4,6 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import { crearMovimiento, confirmarPago, type MovimientoFormState } from "@/app/(app)/movimientos/actions";
 import { numeroALetras, money, fmtDate, todayISO } from "@/lib/calculos";
 import { nombreCompleto } from "@/lib/terceros";
+import { useEsAdmin } from "@/lib/auth/role-context";
 import type { Cuenta, CampoExtra, Tercero, TipoMovimiento } from "@/lib/types";
 
 // Campos dinámicos leídos desde tipos_movimiento.campos_extra (jsonb).
@@ -80,6 +81,20 @@ export default function FormularioMovimiento(props: Props) {
   const mostrarDescuento = esEgreso && (props.modo === "confirmar" || confirmarAhora);
   const montoBase = props.modo === "confirmar" ? props.movimiento.monto : parseFloat(monto) || 0;
   const valorAPagar = Math.max(0, montoBase - (parseFloat(descuento) || 0));
+  const esAdmin = useEsAdmin();
+
+  if (!esAdmin) {
+    return (
+      <div className="card">
+        <div className="card-h">
+          <h2>{props.modo === "confirmar" ? "Registrar pago" : props.tipo === "ingreso" ? "Nuevo ingreso" : "Nuevo egreso"}</h2>
+        </div>
+        <div className="card-b fhint">
+          Tu cuenta es de solo lectura: no puedes {props.modo === "confirmar" ? "registrar pagos" : "registrar movimientos"}.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="card">

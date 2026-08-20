@@ -2,9 +2,13 @@
 
 import { useTransition } from "react";
 import { anularMovimiento } from "./actions";
+import { useEsAdmin } from "@/lib/auth/role-context";
 
 export default function AnularButton({ id }: { id: string }) {
   const [pending, startTransition] = useTransition();
+  const esAdmin = useEsAdmin();
+
+  if (!esAdmin) return null;
 
   return (
     <button

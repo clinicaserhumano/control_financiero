@@ -5,6 +5,7 @@ import Link from "next/link";
 import { money, fmtDate, todayISO } from "@/lib/calculos";
 import { nombreCompleto } from "@/lib/terceros";
 import { marcarPagadosMasivo, anularSeleccionados, type MarcarPagadosState } from "./actions";
+import { useEsAdmin } from "@/lib/auth/role-context";
 import type { Cuenta } from "@/lib/types";
 
 type Pendiente = {
@@ -16,6 +17,7 @@ type Pendiente = {
 };
 
 export default function TablaPendientes({ pendientes, cuentas }: { pendientes: Pendiente[]; cuentas: Cuenta[] }) {
+  const esAdmin = useEsAdmin();
   const [seleccion, setSeleccion] = useState<Set<string>>(new Set());
   const [pendienteAnular, startTransition] = useTransition();
   const [state, formAction, pending] = useActionState<MarcarPagadosState, FormData>(async (_prev, formData) => {
@@ -49,20 +51,22 @@ export default function TablaPendientes({ pendientes, cuentas }: { pendientes: P
         <table className="table-base">
           <thead>
             <tr>
-              <th style={{ width: 30 }}>
-                <input type="checkbox" checked={todasSeleccionadas} onChange={toggleTodas} />
-              </th>
+              {esAdmin && (
+                <th style={{ width: 30 }}>
+                  <input type="checkbox" checked={todasSeleccionadas} onChange={toggleTodas} />
+                </th>
+              )}
               <th>Fecha</th>
               <th>Personal</th>
               <th>Concepto</th>
               <th className="td-num">Valor</th>
-              <th></th>
+              {esAdmin && <th></th>}
             </tr>
           </thead>
           <tbody>
             {pendientes.length === 0 ? (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={esAdmin ? 6 : 4}>
                   <div className="empty-state">
                     <div className="text-[15px] font-semibold text-[#475069] mb-1">Sin cuentas por pagar</div>
                     No hay egresos pendientes con este filtro.
@@ -72,18 +76,22 @@ export default function TablaPendientes({ pendientes, cuentas }: { pendientes: P
             ) : (
               pendientes.map((p) => (
                 <tr key={p.id}>
-                  <td>
-                    <input type="checkbox" checked={seleccion.has(p.id)} onChange={() => toggle(p.id)} />
-                  </td>
+                  {esAdmin && (
+                    <td>
+                      <input type="checkbox" checked={seleccion.has(p.id)} onChange={() => toggle(p.id)} />
+                    </td>
+                  )}
                   <td>{fmtDate(p.fecha)}</td>
                   <td className="font-semibold">{p.tercero ? nombreCompleto(p.tercero) : "—"}</td>
                   <td className="text-[12px] text-muted">{p.concepto || "—"}</td>
                   <td className="td-num">{money(p.monto)}</td>
-                  <td>
-                    <Link href={`/movimientos/${p.id}/pagar?volver=/cuentas-por-pagar`} className="btn-gold btn-sm">
-                      Registrar pago
-                    </Link>
-                  </td>
+                  {esAdmin && (
+                    <td>
+                      <Link href={`/movimientos/${p.id}/pagar?volver=/cuentas-por-pagar`} className="btn-gold btn-sm">
+                        Registrar pago
+                      </Link>
+                    </td>
+                  )}
                 </tr>
               ))
             )}

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import type { TerceroTipo } from "@/lib/types";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -11,6 +12,9 @@ export type TerceroFormState = { error: string } | null;
 type TerceroInsert = Database["public"]["Tables"]["terceros"]["Insert"];
 
 export async function guardarTercero(_prev: TerceroFormState, formData: FormData): Promise<TerceroFormState> {
+  const chk = await requireAdmin();
+  if (!chk.ok) return { error: chk.error };
+
   const editandoId = String(formData.get("id") || "");
   const tipo = String(formData.get("tipo") || "") as TerceroTipo;
   const nombre = String(formData.get("nombre") || "").trim();
@@ -56,6 +60,8 @@ export async function guardarTercero(_prev: TerceroFormState, formData: FormData
 }
 
 export async function toggleActivoTercero(id: string, activo: boolean) {
+  const chk = await requireAdmin();
+  if (!chk.ok) return;
   const supabase = await createClient();
   await supabase.from("terceros").update({ activo }).eq("id", id);
   revalidatePath("/terceros");

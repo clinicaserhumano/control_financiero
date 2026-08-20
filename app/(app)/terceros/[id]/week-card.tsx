@@ -3,12 +3,15 @@
 import { useActionState, useState, useTransition } from "react";
 import { calcularHorasSemana, money, todayISO } from "@/lib/calculos";
 import { agregarSemana, eliminarSemana, guardarDiasSemana, cargarSemana, type CargarSemanaState } from "./bitacora-actions";
+import { useEsAdmin } from "@/lib/auth/role-context";
 import type { DiaSemana } from "@/lib/types";
 
 type MovimientoLigado = { id: string; estado: "pendiente" | "confirmado" | "anulado"; monto: number } | null;
 
 export function BotonAgregarSemana({ terceroId }: { terceroId: string }) {
   const [pending, startTransition] = useTransition();
+  const esAdmin = useEsAdmin();
+  if (!esAdmin) return null;
   return (
     <button type="button" disabled={pending} className="btn-primary" onClick={() => startTransition(() => agregarSemana(terceroId))}>
       {pending ? "…" : "+ Agregar semana"}
@@ -35,8 +38,9 @@ export default function WeekCard({
   const [dias, setDias] = useState<DiaSemana[]>(diasIniciales);
   const [pendienteGuardar, startTransition] = useTransition();
   const [cargarState, cargarAction, cargando] = useActionState<CargarSemanaState, FormData>(cargarSemana, null);
+  const esAdmin = useEsAdmin();
 
-  const bloqueada = movimiento != null && movimiento.estado !== "pendiente";
+  const bloqueada = !esAdmin || (movimiento != null && movimiento.estado !== "pendiente");
   const { horas, valor } = calcularHorasSemana(dias, precioHora);
 
   function actualizarDia(i: number, campo: keyof DiaSemana, valorCampo: string) {
