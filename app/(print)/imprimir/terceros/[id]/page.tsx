@@ -4,6 +4,7 @@ import { money, fmtDate, todayISO, totalPorTipoEstado } from "@/lib/calculos";
 import { TERCERO_TIPO_LABEL, nombreCompleto } from "@/lib/terceros";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
+import PrintLogo from "@/components/print/print-logo";
 import type { MovimientoFinanciero } from "@/lib/types";
 
 type MovConNombres = MovimientoFinanciero & { tipo_movimiento: { nombre: string } | null };
@@ -44,6 +45,7 @@ export default async function ImprimirTerceroPage({
       <PrintStyles tamano="A4" />
       <PrintActions volverHref={`/terceros/${id}`} />
       <div className="hoja">
+        <PrintLogo />
         <div className="hd">
           <div>
             <div className="ttl">Reporte de Movimientos</div>

@@ -3,6 +3,7 @@ import { money, fmtDate, todayISO } from "@/lib/calculos";
 import { nombreCompleto } from "@/lib/terceros";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
+import PrintLogo from "@/components/print/print-logo";
 import type { MovimientoFinanciero } from "@/lib/types";
 
 type MovConRelaciones = MovimientoFinanciero & {
@@ -47,6 +48,7 @@ export default async function ImprimirMovimientosPage({ searchParams }: { search
       <PrintStyles tamano="A4" />
       <PrintActions volverHref={`/movimientos?tipo=${tipo}`} />
       <div className="hoja">
+        <PrintLogo />
         <div className="hd">
           <div>
             <div className="ttl">{tipo === "ingreso" ? "Reporte de Ingresos" : "Reporte de Egresos"}</div>

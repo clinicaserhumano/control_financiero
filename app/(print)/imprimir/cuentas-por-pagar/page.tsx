@@ -3,6 +3,7 @@ import { money, fmtDate, todayISO } from "@/lib/calculos";
 import { nombreCompleto } from "@/lib/terceros";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
+import PrintLogo from "@/components/print/print-logo";
 import type { MovimientoFinanciero } from "@/lib/types";
 
 type MovConNombres = MovimientoFinanciero & { tercero: { nombre: string; apellido: string | null } | null };
@@ -34,6 +35,7 @@ export default async function ImprimirCxPPage({ searchParams }: { searchParams: 
       <PrintStyles tamano="A4" />
       <PrintActions volverHref="/cuentas-por-pagar" />
       <div className="hoja">
+        <PrintLogo />
         <div className="hd">
           <div>
             <div className="ttl">Cuentas por Pagar</div>

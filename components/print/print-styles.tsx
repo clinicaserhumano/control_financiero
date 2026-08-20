@@ -17,6 +17,8 @@ export default function PrintStyles({ tamano }: { tamano: "A5" | "A4" }) {
       .no-imprimir { }
       @media print { .no-imprimir { display: none !important; } }
 
+      .logo-print { height: 30px; width: auto; display: block; margin-bottom: 8px; }
+
       .hd { border-bottom: 3px solid #FDB44B; padding-bottom: 8px; margin-bottom: 14px;
         display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
       .hd .org { font-size: 14px; font-weight: 800; color: #2B2420; letter-spacing: .3px; }

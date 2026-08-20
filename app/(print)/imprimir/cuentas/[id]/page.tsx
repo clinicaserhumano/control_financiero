@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { movimientosConSaldo, money, fmtDate, todayISO } from "@/lib/calculos";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
+import PrintLogo from "@/components/print/print-logo";
 import type { MovimientoFinanciero } from "@/lib/types";
 
 type MovConNombres = MovimientoFinanciero & {
@@ -47,6 +48,7 @@ export default async function ImprimirCuentaPage({
       <PrintStyles tamano="A4" />
       <PrintActions volverHref={`/cuentas/${id}`} />
       <div className="hoja">
+        <PrintLogo />
         <div className="hd">
           <div>
             <div className="ttl">Estado de Cuenta Bancaria</div>

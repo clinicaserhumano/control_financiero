@@ -4,6 +4,7 @@ import { money, fmtDate, numeroALetras, todayISO } from "@/lib/calculos";
 import { nombreCompleto } from "@/lib/terceros";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
+import PrintLogo from "@/components/print/print-logo";
 import type { Cuenta, TipoMovimiento, Tercero } from "@/lib/types";
 
 export default async function ImprimirMovimientoPage({ params }: { params: Promise<{ id: string }> }) {
@@ -34,6 +35,7 @@ export default async function ImprimirMovimientoPage({ params }: { params: Promi
       <PrintStyles tamano="A5" />
       <PrintActions volverHref={esEgreso ? "/movimientos?tipo=egreso" : "/movimientos?tipo=ingreso"} />
       <div className="hoja">
+        <PrintLogo />
         <div className="hd">
           <div>
             <div className="org">{m.cuenta?.empresa || "Sin cuenta asignada"}</div>
