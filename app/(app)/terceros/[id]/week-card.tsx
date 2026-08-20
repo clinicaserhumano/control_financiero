@@ -4,18 +4,21 @@ import { useActionState, useState, useTransition } from "react";
 import { calcularHorasSemana, money, todayISO } from "@/lib/calculos";
 import { agregarSemana, eliminarSemana, guardarDiasSemana, cargarSemana, type CargarSemanaState } from "./bitacora-actions";
 import { useEsAdmin } from "@/lib/auth/role-context";
+import { BotonAdmin } from "@/lib/auth/boton-admin";
 import type { DiaSemana } from "@/lib/types";
 
 type MovimientoLigado = { id: string; estado: "pendiente" | "confirmado" | "anulado"; monto: number } | null;
 
 export function BotonAgregarSemana({ terceroId }: { terceroId: string }) {
   const [pending, startTransition] = useTransition();
-  const esAdmin = useEsAdmin();
-  if (!esAdmin) return null;
   return (
-    <button type="button" disabled={pending} className="btn-primary" onClick={() => startTransition(() => agregarSemana(terceroId))}>
+    <BotonAdmin
+      disabled={pending}
+      className="btn-primary"
+      onClick={() => startTransition(() => agregarSemana(terceroId))}
+    >
       {pending ? "…" : "+ Agregar semana"}
-    </button>
+    </BotonAdmin>
   );
 }
 
@@ -40,7 +43,10 @@ export default function WeekCard({
   const [cargarState, cargarAction, cargando] = useActionState<CargarSemanaState, FormData>(cargarSemana, null);
   const esAdmin = useEsAdmin();
 
-  const bloqueada = !esAdmin || (movimiento != null && movimiento.estado !== "pendiente");
+  // Dos motivos distintos para no poder editar: ya se pagó/anuló (estado del
+  // negocio, aplica a cualquiera) o el usuario es de solo lectura (permiso).
+  const yaResuelta = movimiento != null && movimiento.estado !== "pendiente";
+  const camposDeshabilitados = !esAdmin || yaResuelta;
   const { horas, valor } = calcularHorasSemana(dias, precioHora);
 
   function actualizarDia(i: number, campo: keyof DiaSemana, valorCampo: string) {
@@ -53,7 +59,7 @@ export default function WeekCard({
         <span className="font-bold text-[13px] text-ink">Semana:</span>
         <input
           type="text"
-          disabled={bloqueada}
+          disabled={camposDeshabilitados}
           placeholder="Ej: 11 al 16 de mayo 2026"
           value={etiqueta}
           onChange={(e) => setEtiqueta(e.target.value)}
@@ -86,7 +92,7 @@ export default function WeekCard({
                   <td>
                     <input
                       type="date"
-                      disabled={bloqueada}
+                      disabled={camposDeshabilitados}
                       value={d.fecha}
                       onChange={(e) => actualizarDia(i, "fecha", e.target.value)}
                       className="finput !py-1.5 !text-xs"
@@ -95,7 +101,7 @@ export default function WeekCard({
                   <td>
                     <input
                       type="time"
-                      disabled={bloqueada}
+                      disabled={camposDeshabilitados}
                       value={d.entrada}
                       onChange={(e) => actualizarDia(i, "entrada", e.target.value)}
                       className="finput !py-1.5 !text-xs"
@@ -104,7 +110,7 @@ export default function WeekCard({
                   <td>
                     <input
                       type="time"
-                      disabled={bloqueada}
+                      disabled={camposDeshabilitados}
                       value={d.salida}
                       onChange={(e) => actualizarDia(i, "salida", e.target.value)}
                       className="finput !py-1.5 !text-xs"
@@ -115,7 +121,7 @@ export default function WeekCard({
                       type="number"
                       min="0"
                       step="5"
-                      disabled={bloqueada}
+                      disabled={camposDeshabilitados}
                       placeholder="min"
                       value={d.almuerzo}
                       onChange={(e) => actualizarDia(i, "almuerzo", e.target.value)}
@@ -133,7 +139,7 @@ export default function WeekCard({
                   <td>
                     <input
                       type="text"
-                      disabled={bloqueada}
+                      disabled={camposDeshabilitados}
                       placeholder="feriado, permiso…"
                       value={d.nota}
                       onChange={(e) => actualizarDia(i, "nota", e.target.value)}
@@ -165,26 +171,26 @@ export default function WeekCard({
           <span className="fhint mt-0">Llena la asistencia y pulsa Cargar semana</span>
         )}
 
-        {!bloqueada && (
+        {!yaResuelta && (
           <form action={cargarAction} className="flex items-center gap-2 ml-auto flex-wrap">
             <input type="hidden" name="semana_id" value={semanaId} />
             <input type="hidden" name="tercero_id" value={terceroId} />
             <input type="hidden" name="etiqueta" value={etiqueta} />
             <input type="hidden" name="dias" value={JSON.stringify(dias)} />
-            <input type="date" name="fecha" defaultValue={todayISO()} className="finput !w-auto !py-1.5 !text-xs" />
-            <button
+            <input type="date" name="fecha" disabled={!esAdmin} defaultValue={todayISO()} className="finput !w-auto !py-1.5 !text-xs" />
+            <BotonAdmin
               type="button"
               disabled={pendienteGuardar}
               onClick={() => startTransition(() => guardarDiasSemana(semanaId, terceroId, etiqueta, dias))}
               className="btn-ghost btn-sm"
             >
               {pendienteGuardar ? "…" : "Guardar avance"}
-            </button>
-            <button type="submit" disabled={cargando} className="btn-gold btn-sm">
+            </BotonAdmin>
+            <BotonAdmin type="submit" disabled={cargando} className="btn-gold btn-sm">
               {cargando ? "…" : movimiento ? "Recargar semana" : "Cargar semana"}
-            </button>
+            </BotonAdmin>
             {!movimiento && (
-              <button
+              <BotonAdmin
                 type="button"
                 className="btn-danger btn-sm"
                 onClick={() => {
@@ -192,7 +198,7 @@ export default function WeekCard({
                 }}
               >
                 Eliminar
-              </button>
+              </BotonAdmin>
             )}
           </form>
         )}

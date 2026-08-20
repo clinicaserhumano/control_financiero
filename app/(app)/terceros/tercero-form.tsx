@@ -5,6 +5,7 @@ import Link from "next/link";
 import { guardarTercero, type TerceroFormState } from "./actions";
 import { TERCERO_TABS, type TerceroGrupo } from "@/lib/terceros";
 import { useEsAdmin } from "@/lib/auth/role-context";
+import { BotonAdmin } from "@/lib/auth/boton-admin";
 import type { Cuenta, Tercero } from "@/lib/types";
 
 export default function TerceroForm({
@@ -30,17 +31,6 @@ export default function TerceroForm({
     if (!isNaN(s) && !isNaN(h) && h > 0) setPrecioHora((s / h).toFixed(4));
   }
 
-  if (!esAdmin) {
-    return (
-      <div className="card">
-        <div className="card-h">
-          <h2>{terceroEditando ? "Editar persona" : "Nueva persona"}</h2>
-        </div>
-        <div className="card-b fhint">Tu cuenta es de solo lectura: no puedes crear ni editar personal.</div>
-      </div>
-    );
-  }
-
   return (
     <div className="card">
       <div className="card-h">
@@ -49,6 +39,7 @@ export default function TerceroForm({
       <div className="card-b">
         <form action={formAction} className="flex flex-col">
           {terceroEditando && <input type="hidden" name="id" value={terceroEditando.id} />}
+          <fieldset disabled={!esAdmin} className="contents">
           <div className="grid grid-cols-2 gap-3">
             <div className="field">
               <label className="flabel flabel-req" htmlFor="nombre">
@@ -181,6 +172,7 @@ export default function TerceroForm({
               </div>
             </div>
           )}
+          </fieldset>
 
           {state?.error && (
             <div className="alert-error mb-3.5">
@@ -188,9 +180,9 @@ export default function TerceroForm({
             </div>
           )}
           <div className="flex gap-2.5 flex-wrap mt-1.5">
-            <button type="submit" disabled={pending} className="btn-primary">
+            <BotonAdmin type="submit" disabled={pending} className="btn-primary">
               {pending ? "Guardando…" : terceroEditando ? "Guardar cambios" : "Guardar persona"}
-            </button>
+            </BotonAdmin>
             {terceroEditando && (
               <Link href={`/terceros?grupo=${grupoActivo}`} className="btn-ghost">
                 Cancelar edición

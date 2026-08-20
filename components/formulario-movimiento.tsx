@@ -5,6 +5,7 @@ import { crearMovimiento, confirmarPago, type MovimientoFormState } from "@/app/
 import { numeroALetras, money, fmtDate, todayISO } from "@/lib/calculos";
 import { nombreCompleto } from "@/lib/terceros";
 import { useEsAdmin } from "@/lib/auth/role-context";
+import { BotonAdmin } from "@/lib/auth/boton-admin";
 import type { Cuenta, CampoExtra, Tercero, TipoMovimiento } from "@/lib/types";
 
 // Campos dinámicos leídos desde tipos_movimiento.campos_extra (jsonb).
@@ -83,19 +84,6 @@ export default function FormularioMovimiento(props: Props) {
   const valorAPagar = Math.max(0, montoBase - (parseFloat(descuento) || 0));
   const esAdmin = useEsAdmin();
 
-  if (!esAdmin) {
-    return (
-      <div className="card">
-        <div className="card-h">
-          <h2>{props.modo === "confirmar" ? "Registrar pago" : props.tipo === "ingreso" ? "Nuevo ingreso" : "Nuevo egreso"}</h2>
-        </div>
-        <div className="card-b fhint">
-          Tu cuenta es de solo lectura: no puedes {props.modo === "confirmar" ? "registrar pagos" : "registrar movimientos"}.
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="card">
       <div className="card-h">
@@ -107,6 +95,7 @@ export default function FormularioMovimiento(props: Props) {
           <input type="hidden" name="redirect_to" value={props.redirectTo} />
           {props.modo === "confirmar" && <input type="hidden" name="movimiento_id" value={props.movimiento.id} />}
 
+          <fieldset disabled={!esAdmin} className="contents">
           {props.modo === "confirmar" && (
             <div className="letras-box mb-3.5">
               {props.terceroNombre && (
@@ -378,6 +367,7 @@ export default function FormularioMovimiento(props: Props) {
               className="finput"
             />
           </div>
+          </fieldset>
 
           {state?.error && (
             <div className="alert-error mb-3.5">
@@ -386,9 +376,9 @@ export default function FormularioMovimiento(props: Props) {
           )}
 
           <div className="flex gap-2.5 flex-wrap mt-1.5">
-            <button type="submit" disabled={pending} className="btn-primary">
+            <BotonAdmin type="submit" disabled={pending} className="btn-primary">
               {pending ? "Guardando…" : props.modo === "confirmar" ? "Registrar pago" : "Guardar"}
-            </button>
+            </BotonAdmin>
           </div>
         </form>
       </div>

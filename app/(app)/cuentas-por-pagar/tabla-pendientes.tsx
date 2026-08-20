@@ -1,11 +1,11 @@
 "use client";
 
 import { useActionState, useMemo, useState, useTransition } from "react";
-import Link from "next/link";
 import { money, fmtDate, todayISO } from "@/lib/calculos";
 import { nombreCompleto } from "@/lib/terceros";
 import { marcarPagadosMasivo, anularSeleccionados, type MarcarPagadosState } from "./actions";
 import { useEsAdmin } from "@/lib/auth/role-context";
+import { BotonAdmin, EnlaceAdmin } from "@/lib/auth/boton-admin";
 import type { Cuenta } from "@/lib/types";
 
 type Pendiente = {
@@ -51,22 +51,20 @@ export default function TablaPendientes({ pendientes, cuentas }: { pendientes: P
         <table className="table-base">
           <thead>
             <tr>
-              {esAdmin && (
-                <th style={{ width: 30 }}>
-                  <input type="checkbox" checked={todasSeleccionadas} onChange={toggleTodas} />
-                </th>
-              )}
+              <th style={{ width: 30 }}>
+                <input type="checkbox" disabled={!esAdmin} checked={todasSeleccionadas} onChange={toggleTodas} />
+              </th>
               <th>Fecha</th>
               <th>Personal</th>
               <th>Concepto</th>
               <th className="td-num">Valor</th>
-              {esAdmin && <th></th>}
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {pendientes.length === 0 ? (
               <tr>
-                <td colSpan={esAdmin ? 6 : 4}>
+                <td colSpan={6}>
                   <div className="empty-state">
                     <div className="empty-title">Sin cuentas por pagar</div>
                     No hay egresos pendientes con este filtro.
@@ -76,22 +74,18 @@ export default function TablaPendientes({ pendientes, cuentas }: { pendientes: P
             ) : (
               pendientes.map((p) => (
                 <tr key={p.id}>
-                  {esAdmin && (
-                    <td>
-                      <input type="checkbox" checked={seleccion.has(p.id)} onChange={() => toggle(p.id)} />
-                    </td>
-                  )}
+                  <td>
+                    <input type="checkbox" disabled={!esAdmin} checked={seleccion.has(p.id)} onChange={() => toggle(p.id)} />
+                  </td>
                   <td>{fmtDate(p.fecha)}</td>
                   <td className="font-semibold">{p.tercero ? nombreCompleto(p.tercero) : "—"}</td>
                   <td className="text-[12px] text-muted">{p.concepto || "—"}</td>
                   <td className="td-num">{money(p.monto)}</td>
-                  {esAdmin && (
-                    <td>
-                      <Link href={`/movimientos/${p.id}/pagar?volver=/cuentas-por-pagar`} className="btn-gold btn-sm">
-                        Registrar pago
-                      </Link>
-                    </td>
-                  )}
+                  <td>
+                    <EnlaceAdmin href={`/movimientos/${p.id}/pagar?volver=/cuentas-por-pagar`} className="btn-gold btn-sm">
+                      Registrar pago
+                    </EnlaceAdmin>
+                  </td>
                 </tr>
               ))
             )}
@@ -108,7 +102,7 @@ export default function TablaPendientes({ pendientes, cuentas }: { pendientes: P
             {[...seleccion].map((id) => (
               <input key={id} type="hidden" name="ids" value={id} />
             ))}
-            <select name="cuenta_id" required className="finput !w-auto !py-1.5 !text-xs">
+            <select name="cuenta_id" required disabled={!esAdmin} className="finput !w-auto !py-1.5 !text-xs">
               <option value="">— Cuenta —</option>
               {cuentas.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -116,13 +110,12 @@ export default function TablaPendientes({ pendientes, cuentas }: { pendientes: P
                 </option>
               ))}
             </select>
-            <input type="date" name="fecha_pago" defaultValue={todayISO()} className="finput !w-auto !py-1.5 !text-xs" />
-            <button type="submit" disabled={pending} className="btn-gold btn-sm">
+            <input type="date" name="fecha_pago" disabled={!esAdmin} defaultValue={todayISO()} className="finput !w-auto !py-1.5 !text-xs" />
+            <BotonAdmin type="submit" disabled={pending} className="btn-gold btn-sm">
               {pending ? "…" : "✓ Marcar pagados"}
-            </button>
+            </BotonAdmin>
           </form>
-          <button
-            type="button"
+          <BotonAdmin
             disabled={pendienteAnular}
             className="btn-danger btn-sm"
             onClick={() => {
@@ -135,17 +128,13 @@ export default function TablaPendientes({ pendientes, cuentas }: { pendientes: P
             }}
           >
             {pendienteAnular ? "…" : "Anular seleccionados"}
-          </button>
+          </BotonAdmin>
           <button type="button" className="btn-ghost btn-sm" onClick={() => setSeleccion(new Set())}>
             Limpiar
           </button>
         </div>
       )}
-      {state?.error && (
-        <div className="alert-error mt-3 mx-4">
-          {state.error}
-        </div>
-      )}
+      {state?.error && <div className="alert-error mt-3 mx-4">{state.error}</div>}
     </div>
   );
 }

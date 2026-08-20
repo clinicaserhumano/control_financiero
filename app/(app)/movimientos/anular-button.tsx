@@ -2,17 +2,13 @@
 
 import { useTransition } from "react";
 import { anularMovimiento } from "./actions";
-import { useEsAdmin } from "@/lib/auth/role-context";
+import { BotonAdmin } from "@/lib/auth/boton-admin";
 
 export default function AnularButton({ id }: { id: string }) {
   const [pending, startTransition] = useTransition();
-  const esAdmin = useEsAdmin();
-
-  if (!esAdmin) return null;
 
   return (
-    <button
-      type="button"
+    <BotonAdmin
       className="btn-danger btn-sm"
       disabled={pending}
       onClick={() => {
@@ -21,6 +17,6 @@ export default function AnularButton({ id }: { id: string }) {
       }}
     >
       {pending ? "…" : "Anular"}
-    </button>
+    </BotonAdmin>
   );
 }
