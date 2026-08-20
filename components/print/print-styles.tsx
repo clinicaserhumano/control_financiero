@@ -48,6 +48,8 @@ export default function PrintStyles({ tamano }: { tamano: "A5" | "A4" }) {
       table.reporte th { background: #fff; color: #2B2420; font-size: 9.5px; text-transform: uppercase;
         letter-spacing: .4px; padding: 7px 8px; text-align: left; border-bottom: 2px solid #2B2420; }
       table.reporte td { padding: 6px 8px; border-bottom: 1px solid #e4e2d9; font-size: 10.5px; vertical-align: top; }
+      table.reporte.detalle-mov { table-layout: fixed; }
+      table.reporte.detalle-mov td, table.reporte.detalle-mov th { overflow-wrap: break-word; word-break: break-word; }
       .rt { text-align: right; font-family: 'Courier New', monospace; white-space: nowrap; }
       tr.total td { background: #fff; color: #2B2420; font-weight: 800; font-size: 12px; border-top: 2px solid #2B2420; border-bottom: none; }
 

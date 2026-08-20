@@ -133,13 +133,20 @@ export default async function ImprimirGeneralPage({
         <div className="badge" style={{ marginTop: 16 }}>
           Detalle de movimientos del período
         </div>
-        <table className="reporte">
+        <table className="reporte detalle-mov">
+          <colgroup>
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "22%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "36%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "10%" }} />
+          </colgroup>
           <thead>
             <tr>
               <th>Fecha</th>
               <th>Cuenta</th>
               <th>Dirección</th>
-              <th>Tipo</th>
               <th>Concepto</th>
               <th>Estado</th>
               <th style={{ textAlign: "right" }}>Valor</th>
@@ -151,8 +158,7 @@ export default async function ImprimirGeneralPage({
                 <td>{fmtDate(m.fecha)}</td>
                 <td>{m.cuenta?.empresa || "—"}</td>
                 <td>{m.tipo === "ingreso" ? "Ingreso" : "Egreso"}</td>
-                <td>{m.tipo_movimiento?.nombre || "—"}</td>
-                <td>{m.concepto || "—"}</td>
+                <td>{m.concepto || m.tipo_movimiento?.nombre || "—"}</td>
                 <td>{m.estado === "confirmado" ? "Confirmado" : m.estado === "pendiente" ? "Pendiente" : "Anulado"}</td>
                 <td className="rt">{money(m.monto)}</td>
               </tr>
