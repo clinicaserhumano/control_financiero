@@ -43,7 +43,7 @@ export default function LoginForm({ next }: { next: string }) {
         />
       </div>
       {state?.error && (
-        <div className="text-[13px] font-semibold text-danger bg-[#fbeaea] border border-[#f3d3d3] rounded-lg px-3 py-2">
+        <div className="alert-error">
           {state.error}
         </div>
       )}

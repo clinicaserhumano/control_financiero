@@ -1,17 +1,69 @@
 @import "tailwindcss";
 
+/* Habilita el prefijo dark: controlado por la clase .dark en <html>, para
+   retoques puntuales que no ameritan su propia variable de tema. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --color-carbon: #2b2420;
-  --color-carbon-2: #3d332c;
+  /* Fijos de marca: no cambian entre claro/oscuro (chrome estructural:
+     nav, botones "navy", barras/activos que siempre deben leerse oscuros). */
   --color-primary: #fc6b12;
   --color-primary-dark: #d8560a;
   --color-amber: #fdb44b;
+  --color-carbon: #2b2420;
+  --color-carbon-2: #3d332c;
+
+  /* Adaptables: valores claros por defecto, sobreescritos bajo html.dark */
+  --color-header: var(--color-primary);
   --color-paper: #f6f5f0;
   --color-surface: #ffffff;
+  --color-surface-2: #f4f5f8;
   --color-border: #e4e2d9;
+  --color-border-2: #f0efe9;
   --color-ink: #2b2420;
   --color-muted: #6b7280;
+  --color-empty-title: #475069;
   --color-danger: #c0392b;
+  --color-danger-bg: #fbeaea;
+  --color-danger-border: #f3d3d3;
+  --color-warning-bg: #fdf3df;
+  --color-warning-text: #8a6d12;
+  --color-ghost-bg: #eef0f4;
+  --color-ghost-bg-hover: #e2e6ee;
+  --color-input-bg: #ffffff;
+  --color-letras-bg: #f8f7f2;
+  --color-pill-bg: #eef6f4;
+}
+
+html.dark {
+  --color-header: var(--color-carbon);
+  --color-paper: #18140f;
+  --color-surface: #221c17;
+  --color-surface-2: #2a231d;
+  --color-border: #3d332c;
+  --color-border-2: #362e27;
+  --color-ink: #ede6dd;
+  --color-muted: #a89d90;
+  --color-empty-title: #cfc6bb;
+  --color-danger: #e2584a;
+  --color-danger-bg: #3a1e1b;
+  --color-danger-border: #5a2e28;
+  --color-warning-bg: #3a2e17;
+  --color-warning-text: #e0b45f;
+  --color-ghost-bg: #2e2822;
+  --color-ghost-bg-hover: #39322a;
+  --color-input-bg: #221c17;
+  --color-letras-bg: #221c17;
+  --color-pill-bg: #1e2e29;
+}
+
+/* El toggle agrega/quita html.dark; esta transición hace el cambio con fade
+   en vez de un salto brusco de color. */
+html {
+  transition: background-color 0.35s ease;
+}
+* {
+  transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease;
 }
 
 @theme inline {
@@ -20,8 +72,10 @@
   --color-primary: var(--color-primary);
   --color-primary-dark: var(--color-primary-dark);
   --color-amber: var(--color-amber);
+  --color-header: var(--color-header);
   --color-paper: var(--color-paper);
   --color-surface: var(--color-surface);
+  --color-surface-2: var(--color-surface-2);
   --color-border: var(--color-border);
   --color-ink: var(--color-ink);
   --color-muted: var(--color-muted);
@@ -90,11 +144,11 @@ body {
     background: var(--color-carbon-2);
   }
   .btn-ghost {
-    background: #eef0f4;
-    color: var(--color-carbon);
+    background: var(--color-ghost-bg);
+    color: var(--color-ink);
   }
   .btn-ghost:hover {
-    background: #e2e6ee;
+    background: var(--color-ghost-bg-hover);
   }
   .btn-gold {
     background: var(--color-amber);
@@ -104,11 +158,11 @@ body {
     filter: brightness(0.96);
   }
   .btn-danger {
-    background: #fbeaea;
+    background: var(--color-danger-bg);
     color: var(--color-danger);
   }
   .btn-danger:hover {
-    background: #f6dada;
+    filter: brightness(0.95);
   }
   .btn-sm {
     padding: 6px 11px;
@@ -121,7 +175,7 @@ body {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 12px;
-    box-shadow: 0 1px 2px rgba(43, 36, 32, 0.06), 0 6px 24px rgba(43, 36, 32, 0.06);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 6px 24px rgba(0, 0, 0, 0.06);
   }
   .card-h {
     padding: 14px 18px;
@@ -134,7 +188,7 @@ body {
     margin: 0;
     font-size: 14px;
     font-weight: 700;
-    color: var(--color-carbon);
+    color: var(--color-ink);
   }
   .card-b {
     padding: 18px;
@@ -148,7 +202,7 @@ body {
     display: block;
     font-size: 12px;
     font-weight: 600;
-    color: #33415c;
+    color: var(--color-ink);
     margin: 0 0 6px;
   }
   .flabel-req::after {
@@ -163,7 +217,7 @@ body {
     font-size: 13.5px;
     font-family: var(--font-sans);
     color: var(--color-ink);
-    background: #fff;
+    background: var(--color-input-bg);
     outline: none;
   }
   .finput:focus {
@@ -177,13 +231,22 @@ body {
     margin-top: 4px;
   }
   .letras-box {
-    background: #f8f7f2;
+    background: var(--color-letras-bg);
     border: 1px dashed var(--color-border);
     border-radius: 8px;
     padding: 8px 11px;
     font-size: 12px;
-    color: #33415c;
+    color: var(--color-ink);
     min-height: 34px;
+  }
+  .alert-error {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-danger);
+    background: var(--color-danger-bg);
+    border: 1px solid var(--color-danger-border);
+    border-radius: 8px;
+    padding: 8px 12px;
   }
 
   /* ---------- Tablas ---------- */
@@ -194,8 +257,8 @@ body {
   }
   .table-base thead th {
     text-align: left;
-    background: #f4f5f8;
-    color: #475069;
+    background: var(--color-surface-2);
+    color: var(--color-muted);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.4px;
@@ -206,11 +269,11 @@ body {
   }
   .table-base tbody td {
     padding: 10px 12px;
-    border-bottom: 1px solid #f0efe9;
+    border-bottom: 1px solid var(--color-border-2);
     vertical-align: top;
   }
   .table-base tbody tr:hover {
-    background: #fafbfc;
+    background: var(--color-surface-2);
   }
   .td-num {
     text-align: right;
@@ -223,6 +286,12 @@ body {
     text-align: center;
     color: var(--color-muted);
   }
+  .empty-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-empty-title);
+    margin-bottom: 4px;
+  }
 
   /* ---------- Stats ---------- */
   .stat {
@@ -230,7 +299,7 @@ body {
     border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 16px 18px;
-    box-shadow: 0 1px 2px rgba(43, 36, 32, 0.06), 0 6px 24px rgba(43, 36, 32, 0.06);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 6px 24px rgba(0, 0, 0, 0.06);
   }
   .stat .lbl {
     font-size: 11px;
@@ -242,7 +311,7 @@ body {
   .stat .val {
     font-size: 24px;
     font-weight: 800;
-    color: var(--color-carbon);
+    color: var(--color-ink);
     margin-top: 4px;
     font-variant-numeric: tabular-nums;
   }
@@ -253,8 +322,16 @@ body {
     padding: 2px 10px;
     font-size: 11px;
     font-weight: 700;
-    background: #eef6f4;
+    background: var(--color-pill-bg);
     color: var(--color-primary-dark);
+  }
+  .pill-warning {
+    background: var(--color-warning-bg) !important;
+    color: var(--color-warning-text) !important;
+  }
+  .pill-danger {
+    background: var(--color-danger-bg) !important;
+    color: var(--color-danger) !important;
   }
 }
 

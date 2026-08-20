@@ -183,7 +183,7 @@ export default function TerceroForm({
           )}
 
           {state?.error && (
-            <div className="text-[13px] font-semibold text-danger bg-[#fbeaea] border border-[#f3d3d3] rounded-lg px-3 py-2 mb-3.5">
+            <div className="alert-error mb-3.5">
               {state.error}
             </div>
           )}

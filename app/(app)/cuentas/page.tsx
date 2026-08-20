@@ -46,7 +46,7 @@ export default async function CuentasPage({
           <div className="p-0">
             {listaCuentas.length === 0 ? (
               <div className="empty-state">
-                <div className="text-[15px] font-semibold text-[#475069] mb-1">Sin cuentas</div>
+                <div className="empty-title">Sin cuentas</div>
                 Crea tu primera cuenta para comenzar a registrar movimientos.
               </div>
             ) : (
@@ -77,7 +77,7 @@ export default async function CuentasPage({
                               {c.tipo} {c.numero}
                             </span>
                           </td>
-                          <td className={"td-num font-bold " + (saldo < 0 ? "text-danger" : "text-carbon")}>
+                          <td className={"td-num font-bold " + (saldo < 0 ? "text-danger" : "text-ink")}>
                             {money(saldo)}
                           </td>
                           <td>

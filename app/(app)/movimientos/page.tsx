@@ -253,7 +253,7 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                       <tr>
                         <td colSpan={7}>
                           <div className="empty-state">
-                            <div className="text-[15px] font-semibold text-[#475069] mb-1">
+                            <div className="empty-title">
                               Sin {tipo === "ingreso" ? "ingresos" : "egresos"}
                             </div>
                             Registra el primero con el formulario de la izquierda.
@@ -283,8 +283,8 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                                 (m.estado === "confirmado"
                                   ? ""
                                   : m.estado === "pendiente"
-                                    ? "!bg-[#fdf3df] !text-[#8a6d12]"
-                                    : "!bg-[#fbeaea] !text-danger")
+                                    ? "pill-warning"
+                                    : "pill-danger")
                               }
                             >
                               {m.estado === "confirmado" ? "Confirmado" : m.estado === "pendiente" ? "Pendiente" : "Anulado"}
@@ -323,7 +323,7 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                     <Link href={construirHref(sp, { pagina: String(Math.max(1, paginaSegura - 1)) })} className="btn-ghost btn-sm">
                       ‹ Anterior
                     </Link>
-                    <span className="text-[12.5px] font-bold text-carbon px-1">
+                    <span className="text-[12.5px] font-bold text-ink px-1">
                       Página {paginaSegura} de {totalPaginas}
                     </span>
                     <Link href={construirHref(sp, { pagina: String(Math.min(totalPaginas, paginaSegura + 1)) })} className="btn-ghost btn-sm">

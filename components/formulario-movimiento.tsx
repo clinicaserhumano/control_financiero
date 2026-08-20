@@ -233,7 +233,7 @@ export default function FormularioMovimiento(props: Props) {
               {esEgreso && (
                 <div className="field">
                   <label className="flabel">Razón del egreso (opcional)</label>
-                  <div className="flex gap-4 flex-wrap text-[12.5px] font-semibold text-[#33415c]">
+                  <div className="flex gap-4 flex-wrap text-[12.5px] font-semibold text-[var(--color-ink)]">
                     {(["Luz", "Agua", "Internet", "Otros"] as const).map((op) => (
                       <label key={op} className="flex items-center gap-1.5 cursor-pointer">
                         <input
@@ -271,7 +271,7 @@ export default function FormularioMovimiento(props: Props) {
               {esEgreso && (
                 <div className="field">
                   <label className="flabel">¿Ya se pagó?</label>
-                  <div className="flex gap-4 flex-wrap text-[12.5px] font-semibold text-[#33415c]">
+                  <div className="flex gap-4 flex-wrap text-[12.5px] font-semibold text-[var(--color-ink)]">
                     <label className="flex items-center gap-1.5 cursor-pointer">
                       <input
                         type="radio"
@@ -380,7 +380,7 @@ export default function FormularioMovimiento(props: Props) {
           </div>
 
           {state?.error && (
-            <div className="text-[13px] font-semibold text-danger bg-[#fbeaea] border border-[#f3d3d3] rounded-lg px-3 py-2 mb-3.5">
+            <div className="alert-error mb-3.5">
               {state.error}
             </div>
           )}

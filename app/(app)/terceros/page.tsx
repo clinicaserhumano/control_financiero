@@ -58,14 +58,14 @@ export default async function TercerosPage({
                     "flex items-center gap-1.5 rounded-[9px] border px-3.5 py-2 text-[12.5px] font-bold whitespace-nowrap " +
                     (activo
                       ? "bg-carbon border-carbon text-white"
-                      : "bg-white border-border text-[#475069] hover:border-primary")
+                      : "bg-surface border-border text-[var(--color-muted)] hover:border-primary")
                   }
                 >
                   {t.label}
                   <span
                     className={
                       "text-[10.5px] font-extrabold rounded-full px-1.5 " +
-                      (activo ? "bg-white/20" : "bg-black/[.06]")
+                      (activo ? "bg-white/20" : "bg-black/[.06] dark:bg-white/10")
                     }
                   >
                     {count}
@@ -91,7 +91,7 @@ export default async function TercerosPage({
             <div className="p-0">
               {visibles.length === 0 ? (
                 <div className="empty-state">
-                  <div className="text-[15px] font-semibold text-[#475069] mb-1">Sin registros</div>
+                  <div className="empty-title">Sin registros</div>
                   No hay personal en este grupo con el filtro seleccionado.
                 </div>
               ) : (
@@ -114,7 +114,7 @@ export default async function TercerosPage({
                         return (
                           <tr key={t.id}>
                             <td>
-                              <Link href={`/terceros/${t.id}`} className="font-bold text-carbon hover:text-primary">
+                              <Link href={`/terceros/${t.id}`} className="font-bold text-ink hover:text-primary">
                                 {nombreCompleto(t)}
                               </Link>
                             </td>

@@ -68,7 +68,7 @@ export default function TablaPendientes({ pendientes, cuentas }: { pendientes: P
               <tr>
                 <td colSpan={esAdmin ? 6 : 4}>
                   <div className="empty-state">
-                    <div className="text-[15px] font-semibold text-[#475069] mb-1">Sin cuentas por pagar</div>
+                    <div className="empty-title">Sin cuentas por pagar</div>
                     No hay egresos pendientes con este filtro.
                   </div>
                 </td>
@@ -142,7 +142,7 @@ export default function TablaPendientes({ pendientes, cuentas }: { pendientes: P
         </div>
       )}
       {state?.error && (
-        <div className="text-[13px] font-semibold text-danger bg-[#fbeaea] border border-[#f3d3d3] rounded-lg px-3 py-2 mt-3 mx-4">
+        <div className="alert-error mt-3 mx-4">
           {state.error}
         </div>
       )}

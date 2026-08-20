@@ -74,7 +74,7 @@ export default async function TerceroDetallePage({
       <div className="card mt-3.5">
         <div className="card-b flex items-center gap-4 flex-wrap">
           <div className="flex-1 min-w-[200px]">
-            <div className="text-lg font-extrabold text-carbon">{nombreCompleto(tercero as Tercero)}</div>
+            <div className="text-lg font-extrabold text-ink">{nombreCompleto(tercero as Tercero)}</div>
             <div className="text-[13px] text-muted">
               {TERCERO_TIPO_LABEL[tercero.tipo]}
               {tercero.tarea ? ` · ${tercero.tarea}` : ""}
@@ -103,7 +103,7 @@ export default async function TerceroDetallePage({
             href={`/terceros/${id}?sub=bitacora`}
             className={
               "px-3.5 py-2.5 text-[13px] font-bold border-b-[3px] " +
-              (subActiva === "bitacora" ? "text-carbon border-primary" : "text-muted border-transparent")
+              (subActiva === "bitacora" ? "text-ink border-primary" : "text-muted border-transparent")
             }
           >
             Bitácora semanal
@@ -112,7 +112,7 @@ export default async function TerceroDetallePage({
             href={`/terceros/${id}?sub=movimientos`}
             className={
               "px-3.5 py-2.5 text-[13px] font-bold border-b-[3px] " +
-              (subActiva === "movimientos" ? "text-carbon border-primary" : "text-muted border-transparent")
+              (subActiva === "movimientos" ? "text-ink border-primary" : "text-muted border-transparent")
             }
           >
             Movimientos
@@ -127,7 +127,7 @@ export default async function TerceroDetallePage({
           </div>
           {semanasOrdenadas.length === 0 ? (
             <div className="empty-state">
-              <div className="text-[15px] font-semibold text-[#475069] mb-1">Sin semanas registradas</div>
+              <div className="empty-title">Sin semanas registradas</div>
               Agrega una semana para cargar la asistencia.
             </div>
           ) : (
@@ -165,7 +165,7 @@ export default async function TerceroDetallePage({
             <div className="p-0">
               {lista.length === 0 ? (
                 <div className="empty-state">
-                  <div className="text-[15px] font-semibold text-[#475069] mb-1">Sin movimientos</div>
+                  <div className="empty-title">Sin movimientos</div>
                   Registra el primero con el formulario de la izquierda.
                 </div>
               ) : (
@@ -196,8 +196,8 @@ export default async function TerceroDetallePage({
                                 (m.estado === "confirmado"
                                   ? ""
                                   : m.estado === "pendiente"
-                                    ? "!bg-[#fdf3df] !text-[#8a6d12]"
-                                    : "!bg-[#fbeaea] !text-danger")
+                                    ? "pill-warning"
+                                    : "pill-danger")
                               }
                             >
                               {m.estado === "confirmado" ? "Confirmado" : m.estado === "pendiente" ? "Pendiente" : "Anulado"}

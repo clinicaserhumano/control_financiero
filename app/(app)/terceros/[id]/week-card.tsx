@@ -49,8 +49,8 @@ export default function WeekCard({
 
   return (
     <div className="border border-border rounded-[10px] mb-4 overflow-hidden">
-      <div className="bg-[#f4f5f8] px-3.5 py-2.5 flex items-center gap-2.5 flex-wrap">
-        <span className="font-bold text-[13px] text-carbon">Semana:</span>
+      <div className="bg-[var(--color-surface-2)] px-3.5 py-2.5 flex items-center gap-2.5 flex-wrap">
+        <span className="font-bold text-[13px] text-ink">Semana:</span>
         <input
           type="text"
           disabled={bloqueada}
@@ -155,8 +155,8 @@ export default function WeekCard({
               (movimiento.estado === "confirmado"
                 ? ""
                 : movimiento.estado === "pendiente"
-                  ? "!bg-[#fdf3df] !text-[#8a6d12]"
-                  : "!bg-[#fbeaea] !text-danger")
+                  ? "pill-warning"
+                  : "pill-danger")
             }
           >
             {movimiento.estado === "confirmado" ? "✓ Pagada" : movimiento.estado === "pendiente" ? "En cuentas por pagar" : "Anulada"}
@@ -198,7 +198,7 @@ export default function WeekCard({
         )}
       </div>
       {cargarState?.error && (
-        <div className="text-[13px] font-semibold text-danger bg-[#fbeaea] border-t border-[#f3d3d3] px-3.5 py-2">
+        <div className="alert-error !rounded-none border-x-0 border-b-0 px-3.5 py-2">
           {cargarState.error}
         </div>
       )}

@@ -9,7 +9,7 @@ export default function ToggleActivoButton({ id, activo }: { id: string; activo:
   const esAdmin = useEsAdmin();
 
   if (!esAdmin) {
-    return <span className={"pill " + (activo ? "" : "!bg-[#fbeaea] !text-danger")}>{activo ? "Activo" : "Inactivo"}</span>;
+    return <span className={"pill " + (activo ? "" : "pill-danger")}>{activo ? "Activo" : "Inactivo"}</span>;
   }
 
   return (

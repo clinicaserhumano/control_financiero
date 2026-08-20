@@ -60,13 +60,13 @@ export default async function ReportesPage({
       <div className="flex gap-1.5 mb-4">
         <Link
           href="/reportes?modo=cuenta"
-          className={"rounded-[9px] border px-3.5 py-2 text-[12.5px] font-bold " + (modo === "cuenta" ? "bg-carbon border-carbon text-white" : "bg-white border-border text-[#475069] hover:border-primary")}
+          className={"rounded-[9px] border px-3.5 py-2 text-[12.5px] font-bold " + (modo === "cuenta" ? "bg-carbon border-carbon text-white" : "bg-surface border-border text-[var(--color-muted)] hover:border-primary")}
         >
           Por cuenta
         </Link>
         <Link
           href="/reportes?modo=tercero"
-          className={"rounded-[9px] border px-3.5 py-2 text-[12.5px] font-bold " + (modo === "tercero" ? "bg-carbon border-carbon text-white" : "bg-white border-border text-[#475069] hover:border-primary")}
+          className={"rounded-[9px] border px-3.5 py-2 text-[12.5px] font-bold " + (modo === "tercero" ? "bg-carbon border-carbon text-white" : "bg-surface border-border text-[var(--color-muted)] hover:border-primary")}
         >
           Por Personal
         </Link>

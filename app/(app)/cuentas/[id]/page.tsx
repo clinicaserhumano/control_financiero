@@ -116,7 +116,7 @@ export default async function CuentaDetallePage({
                   <tr>
                     <td colSpan={6}>
                       <div className="empty-state">
-                        <div className="text-[15px] font-semibold text-[#475069] mb-1">Sin movimientos</div>
+                        <div className="empty-title">Sin movimientos</div>
                         {desde || hasta
                           ? "No hay movimientos confirmados en el rango de fechas."
                           : "Esta cuenta todavía no tiene movimientos confirmados."}
@@ -135,7 +135,7 @@ export default async function CuentaDetallePage({
                       </td>
                       <td className="td-num text-primary-dark">{m.tipo === "ingreso" ? money(m.monto) : ""}</td>
                       <td className="td-num">{m.tipo === "egreso" ? money(m.monto) : ""}</td>
-                      <td className={"td-num font-bold " + (m.saldoAcumulado < 0 ? "text-danger" : "text-carbon")}>
+                      <td className={"td-num font-bold " + (m.saldoAcumulado < 0 ? "text-danger" : "text-ink")}>
                         {money(m.saldoAcumulado)}
                       </td>
                     </tr>
