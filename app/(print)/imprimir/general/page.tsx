@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { saldoCuenta, totalPorTipoEstado, money, fmtDate, todayISO } from "@/lib/calculos";
 import { TERCERO_TIPO_LABEL, nombreCompleto } from "@/lib/terceros";
@@ -31,18 +32,18 @@ export default async function ImprimirGeneralPage({
 
   const lista = (movimientos ?? []) as unknown as MovConRelaciones[];
   const enRango = lista.filter((m) => (!desde || m.fecha >= desde) && (!hasta || m.fecha <= hasta));
-  const detalle = enRango
-    .slice()
-    .sort((a, b) => a.fecha.localeCompare(b.fecha) || (a.creado_en || "").localeCompare(b.creado_en || ""));
 
   const filasCuentas = (cuentas ?? []).map((c: Cuenta) => {
     const movsCuenta = lista.filter((m) => m.cuenta_id === c.id);
-    const movsCuentaRango = enRango.filter((m) => m.cuenta_id === c.id);
+    const movsCuentaRango = enRango
+      .filter((m) => m.cuenta_id === c.id)
+      .sort((a, b) => a.fecha.localeCompare(b.fecha) || (a.creado_en || "").localeCompare(b.creado_en || ""));
     return {
       cuenta: c,
       ingresos: totalPorTipoEstado(movsCuentaRango, "ingreso", "confirmado"),
       egresos: totalPorTipoEstado(movsCuentaRango, "egreso", "confirmado"),
       saldo: saldoCuenta(movsCuenta),
+      movimientos: movsCuentaRango,
     };
   });
   const totalIngresos = filasCuentas.reduce((s, f) => s + f.ingresos, 0);
@@ -97,55 +98,20 @@ export default async function ImprimirGeneralPage({
           </div>
         </div>
 
-        <table className="reporte">
-          <thead>
-            <tr>
-              <th>Cuenta</th>
-              <th>Banco / N°</th>
-              <th style={{ textAlign: "right" }}>Ingresos período</th>
-              <th style={{ textAlign: "right" }}>Egresos período</th>
-              <th style={{ textAlign: "right" }}>Saldo actual</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filasCuentas.map((f) => (
-              <tr key={f.cuenta.id}>
-                <td>{f.cuenta.empresa}</td>
-                <td>
-                  {f.cuenta.banco} · {f.cuenta.numero}
-                </td>
-                <td className="rt">{money(f.ingresos)}</td>
-                <td className="rt">{money(f.egresos)}</td>
-                <td className="rt">{money(f.saldo)}</td>
-              </tr>
-            ))}
-            <tr className="total">
-              <td colSpan={2} style={{ textAlign: "right" }}>
-                TOTALES
-              </td>
-              <td className="rt">{money(totalIngresos)}</td>
-              <td className="rt">{money(totalEgresos)}</td>
-              <td className="rt">{money(totalSaldo)}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div className="badge" style={{ marginTop: 16 }}>
-          Detalle de movimientos del período
+        <div className="badge" style={{ marginTop: 4 }}>
+          Movimientos por cuenta
         </div>
         <table className="reporte detalle-mov">
           <colgroup>
-            <col style={{ width: "10%" }} />
-            <col style={{ width: "22%" }} />
-            <col style={{ width: "10%" }} />
-            <col style={{ width: "36%" }} />
             <col style={{ width: "12%" }} />
-            <col style={{ width: "10%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "46%" }} />
+            <col style={{ width: "15%" }} />
+            <col style={{ width: "15%" }} />
           </colgroup>
           <thead>
             <tr>
               <th>Fecha</th>
-              <th>Cuenta</th>
               <th>Dirección</th>
               <th>Concepto</th>
               <th>Estado</th>
@@ -153,15 +119,34 @@ export default async function ImprimirGeneralPage({
             </tr>
           </thead>
           <tbody>
-            {detalle.map((m) => (
-              <tr key={m.id}>
-                <td>{fmtDate(m.fecha)}</td>
-                <td>{m.cuenta?.empresa || "—"}</td>
-                <td>{m.tipo === "ingreso" ? "Ingreso" : "Egreso"}</td>
-                <td>{m.concepto || m.tipo_movimiento?.nombre || "—"}</td>
-                <td>{m.estado === "confirmado" ? "Confirmado" : m.estado === "pendiente" ? "Pendiente" : "Anulado"}</td>
-                <td className="rt">{money(m.monto)}</td>
-              </tr>
+            {filasCuentas.map((f) => (
+              <Fragment key={f.cuenta.id}>
+                <tr className="grupo">
+                  <td colSpan={5}>
+                    {f.cuenta.empresa} — {f.cuenta.banco} · {f.cuenta.numero}
+                    <span style={{ fontWeight: 400, color: "#6B7280", marginLeft: 10 }}>
+                      Ingresos {money(f.ingresos)} · Egresos {money(f.egresos)} · Saldo actual {money(f.saldo)}
+                    </span>
+                  </td>
+                </tr>
+                {f.movimientos.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} style={{ color: "#9aa1ad", fontStyle: "italic" }}>
+                      Sin movimientos en el período
+                    </td>
+                  </tr>
+                ) : (
+                  f.movimientos.map((m) => (
+                    <tr key={m.id}>
+                      <td>{fmtDate(m.fecha)}</td>
+                      <td>{m.tipo === "ingreso" ? "Ingreso" : "Egreso"}</td>
+                      <td>{m.concepto || m.tipo_movimiento?.nombre || "—"}</td>
+                      <td>{m.estado === "confirmado" ? "Confirmado" : m.estado === "pendiente" ? "Pendiente" : "Anulado"}</td>
+                      <td className="rt">{money(m.monto)}</td>
+                    </tr>
+                  ))
+                )}
+              </Fragment>
             ))}
           </tbody>
         </table>
