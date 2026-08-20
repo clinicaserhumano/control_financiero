@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { money, fmtDate, todayISO, totalPorTipoEstado } from "@/lib/calculos";
 import { TERCERO_TIPO_LABEL, nombreCompleto } from "@/lib/terceros";
+import { obtenerPerfilActual } from "@/lib/auth/perfil";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
 import PrintLogo from "@/components/print/print-logo";
@@ -19,6 +20,7 @@ export default async function ImprimirTerceroPage({
   const { id } = await params;
   const { desde, hasta } = await searchParams;
   const supabase = await createClient();
+  const perfil = await obtenerPerfilActual();
 
   const [{ data: tercero }, { data: movimientos }] = await Promise.all([
     supabase.from("terceros").select("*").eq("id", id).single(),
@@ -91,7 +93,9 @@ export default async function ImprimirTerceroPage({
           </tbody>
         </table>
         <div className="foot">
-          <span>Generado el {fmtDate(todayISO())}</span>
+          <span>
+            Generado el {fmtDate(todayISO())} por {perfil?.alias || perfil?.email || "—"}
+          </span>
           <span>Control Financiero · Ser Humano</span>
         </div>
       </div>

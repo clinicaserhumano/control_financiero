@@ -195,6 +195,24 @@ export interface Database {
           },
         ];
       };
+      perfiles_usuario: {
+        Row: {
+          id: string;
+          email: string;
+          alias: string;
+          rol: 'admin' | 'visor';
+          creado_en: string;
+        };
+        Insert: {
+          id: string;
+          email: string;
+          alias: string;
+          rol?: 'admin' | 'visor';
+          creado_en?: string;
+        };
+        Update: Partial<Database['public']['Tables']['perfiles_usuario']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

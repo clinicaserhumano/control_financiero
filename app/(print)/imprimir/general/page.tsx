@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { saldoCuenta, totalPorTipoEstado, money, fmtDate, todayISO } from "@/lib/calculos";
 import { TERCERO_TIPO_LABEL, nombreCompleto } from "@/lib/terceros";
+import { obtenerPerfilActual } from "@/lib/auth/perfil";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
 import PrintLogo from "@/components/print/print-logo";
@@ -21,6 +22,7 @@ export default async function ImprimirGeneralPage({
 }) {
   const { desde, hasta } = await searchParams;
   const supabase = await createClient();
+  const perfil = await obtenerPerfilActual();
 
   const [{ data: cuentas }, { data: movimientos }, { data: terceros }] = await Promise.all([
     supabase.from("cuentas").select("*").order("empresa"),
@@ -184,7 +186,9 @@ export default async function ImprimirGeneralPage({
         )}
 
         <div className="foot">
-          <span>Generado el {fmtDate(todayISO())}</span>
+          <span>
+            Generado el {fmtDate(todayISO())} por {perfil?.alias || perfil?.email || "—"}
+          </span>
           <span>Control Financiero · Ser Humano</span>
         </div>
       </div>

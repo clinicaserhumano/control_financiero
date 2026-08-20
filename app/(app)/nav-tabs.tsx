@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useEsAdmin } from "@/lib/auth/role-context";
 
 const TABS = [
   { href: "/cuentas", label: "Cuentas", match: (p: string) => p.startsWith("/cuentas") && !p.startsWith("/cuentas-por-pagar") },
@@ -12,14 +13,18 @@ const TABS = [
   { href: "/reportes", label: "Reportes", match: (p: string) => p.startsWith("/reportes") },
 ];
 
+const TAB_USUARIOS = { href: "/usuarios", label: "Usuarios", match: (p: string) => p.startsWith("/usuarios") };
+
 export default function NavTabs() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tipo = searchParams.get("tipo") || "";
+  const esAdmin = useEsAdmin();
+  const tabs = esAdmin ? [...TABS, TAB_USUARIOS] : TABS;
 
   return (
     <nav className="flex gap-0.5 bg-carbon-2 px-3.5 overflow-x-auto">
-      {TABS.map((tab) => {
+      {tabs.map((tab) => {
         const active = tab.match(pathname, tipo);
         return (
           <Link

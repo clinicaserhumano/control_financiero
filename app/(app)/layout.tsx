@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { rolDe, ROL_LABEL } from "@/lib/auth/roles";
+import { ROL_LABEL } from "@/lib/auth/roles";
+import { obtenerPerfilActual } from "@/lib/auth/perfil";
 import { RolProvider } from "@/lib/auth/role-context";
 import NavTabs from "./nav-tabs";
 import ThemeToggle from "./theme-toggle";
@@ -16,7 +17,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!user) redirect("/login");
 
-  const rol = rolDe(user.email);
+  const perfil = await obtenerPerfilActual();
+  const rol = perfil?.rol ?? "visor";
 
   return (
     <RolProvider rol={rol}>
@@ -31,7 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
           <div className="flex-1" />
           <div className="text-xs text-white/75 hidden sm:flex items-center gap-2">
-            {user.email}
+            {perfil?.alias || user.email}
             <span className="text-[10px] font-bold uppercase tracking-wide bg-white/15 rounded-full px-2 py-0.5">
               {ROL_LABEL[rol]}
             </span>

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { money, fmtDate, todayISO } from "@/lib/calculos";
 import { nombreCompleto } from "@/lib/terceros";
+import { obtenerPerfilActual } from "@/lib/auth/perfil";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
 import PrintLogo from "@/components/print/print-logo";
@@ -11,6 +12,7 @@ type MovConNombres = MovimientoFinanciero & { tercero: { nombre: string; apellid
 export default async function ImprimirCxPPage({ searchParams }: { searchParams: Promise<{ desde?: string; hasta?: string }> }) {
   const { desde, hasta } = await searchParams;
   const supabase = await createClient();
+  const perfil = await obtenerPerfilActual();
 
   let query = supabase
     .from("movimientos_financieros")
@@ -77,7 +79,9 @@ export default async function ImprimirCxPPage({ searchParams }: { searchParams: 
           </tbody>
         </table>
         <div className="foot">
-          <span>Generado el {fmtDate(todayISO())}</span>
+          <span>
+            Generado el {fmtDate(todayISO())} por {perfil?.alias || perfil?.email || "—"}
+          </span>
           <span>Control Financiero · Ser Humano</span>
         </div>
       </div>

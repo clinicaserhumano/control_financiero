@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { money, fmtDate, numeroALetras, todayISO } from "@/lib/calculos";
 import { nombreCompleto } from "@/lib/terceros";
+import { obtenerPerfilActual } from "@/lib/auth/perfil";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
 import PrintLogo from "@/components/print/print-logo";
@@ -10,6 +11,7 @@ import type { Cuenta, TipoMovimiento, Tercero } from "@/lib/types";
 export default async function ImprimirMovimientoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
+  const perfil = await obtenerPerfilActual();
 
   const { data: movimiento } = await supabase
     .from("movimientos_financieros")
@@ -161,7 +163,9 @@ export default async function ImprimirMovimientoPage({ params }: { params: Promi
         )}
 
         <div className="foot">
-          <span>Documento generado el {fmtDate(todayISO())}</span>
+          <span>
+            Documento generado el {fmtDate(todayISO())} por {perfil?.alias || perfil?.email || "—"}
+          </span>
           <span>Control Financiero · Ser Humano</span>
         </div>
       </div>
