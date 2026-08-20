@@ -6,6 +6,13 @@ import PrintActions from "@/components/print/print-actions";
 import PrintLogo from "@/components/print/print-logo";
 import type { Cuenta, MovimientoFinanciero, Tercero } from "@/lib/types";
 
+type MovConRelaciones = MovimientoFinanciero & {
+  cuenta_id: string | null;
+  tercero_id: string | null;
+  tipo_movimiento: { nombre: string } | null;
+  cuenta: { empresa: string } | null;
+};
+
 export default async function ImprimirGeneralPage({
   searchParams,
 }: {
@@ -16,12 +23,17 @@ export default async function ImprimirGeneralPage({
 
   const [{ data: cuentas }, { data: movimientos }, { data: terceros }] = await Promise.all([
     supabase.from("cuentas").select("*").order("empresa"),
-    supabase.from("movimientos_financieros").select("tipo,estado,monto,fecha,creado_en,cuenta_id,tercero_id"),
+    supabase
+      .from("movimientos_financieros")
+      .select("id,tipo,estado,monto,fecha,creado_en,concepto,cuenta_id,tercero_id,tipo_movimiento:tipos_movimiento(nombre),cuenta:cuentas(empresa)"),
     supabase.from("terceros").select("*").eq("activo", true).order("nombre"),
   ]);
 
-  const lista = (movimientos ?? []) as (MovimientoFinanciero & { cuenta_id: string | null; tercero_id: string | null })[];
+  const lista = (movimientos ?? []) as unknown as MovConRelaciones[];
   const enRango = lista.filter((m) => (!desde || m.fecha >= desde) && (!hasta || m.fecha <= hasta));
+  const detalle = enRango
+    .slice()
+    .sort((a, b) => a.fecha.localeCompare(b.fecha) || (a.creado_en || "").localeCompare(b.creado_en || ""));
 
   const filasCuentas = (cuentas ?? []).map((c: Cuenta) => {
     const movsCuenta = lista.filter((m) => m.cuenta_id === c.id);
@@ -115,6 +127,36 @@ export default async function ImprimirGeneralPage({
               <td className="rt">{money(totalEgresos)}</td>
               <td className="rt">{money(totalSaldo)}</td>
             </tr>
+          </tbody>
+        </table>
+
+        <div className="badge" style={{ marginTop: 16 }}>
+          Detalle de movimientos del período
+        </div>
+        <table className="reporte">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Cuenta</th>
+              <th>Dirección</th>
+              <th>Tipo</th>
+              <th>Concepto</th>
+              <th>Estado</th>
+              <th style={{ textAlign: "right" }}>Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {detalle.map((m) => (
+              <tr key={m.id}>
+                <td>{fmtDate(m.fecha)}</td>
+                <td>{m.cuenta?.empresa || "—"}</td>
+                <td>{m.tipo === "ingreso" ? "Ingreso" : "Egreso"}</td>
+                <td>{m.tipo_movimiento?.nombre || "—"}</td>
+                <td>{m.concepto || "—"}</td>
+                <td>{m.estado === "confirmado" ? "Confirmado" : m.estado === "pendiente" ? "Pendiente" : "Anulado"}</td>
+                <td className="rt">{money(m.monto)}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
 
