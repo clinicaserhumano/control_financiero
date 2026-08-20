@@ -265,7 +265,16 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                         <tr key={m.id}>
                           <td>{fmtDate(m.fecha)}</td>
                           <td>{m.tipo_movimiento?.nombre || "—"}</td>
-                          <td>{tipo === "ingreso" ? m.pagador || "—" : m.tercero ? nombreCompleto(m.tercero) : "—"}</td>
+                          <td>
+                            {tipo === "ingreso"
+                              ? m.pagador || "—"
+                              : m.tercero
+                                ? nombreCompleto(m.tercero)
+                                : m.beneficiario || "—"}
+                            {tipo === "egreso" && m.razon_egreso && (
+                              <div className="text-[10px] font-normal text-muted">{m.razon_egreso}</div>
+                            )}
+                          </td>
                           <td className="text-[12px] text-muted">{m.cuenta ? `${m.cuenta.banco} · ${m.cuenta.numero}` : "—"}</td>
                           <td>
                             <span

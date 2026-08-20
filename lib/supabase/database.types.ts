@@ -112,6 +112,8 @@ export interface Database {
           descuento: number | null;
           observaciones: string | null;
           pagador: string | null;
+          beneficiario: string | null;
+          razon_egreso: string | null;
         };
         Insert: {
           id?: string;
@@ -132,6 +134,8 @@ export interface Database {
           descuento?: number | null;
           observaciones?: string | null;
           pagador?: string | null;
+          beneficiario?: string | null;
+          razon_egreso?: string | null;
         };
         Update: Partial<Database['public']['Tables']['movimientos_financieros']['Insert']>;
         Relationships: [

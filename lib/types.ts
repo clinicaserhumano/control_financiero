@@ -73,6 +73,12 @@ export interface MovimientoFinanciero {
   // tercero_id porque en esta clínica siempre pagan antes de la consulta —
   // nunca queda un saldo por cobrar que justifique una ficha propia.
   pagador: string | null;
+  // Egresos: nombre libre de a favor de quién (compra puntual, proveedor no
+  // registrado en Personal). Independiente de tercero_id, no lo reemplaza.
+  beneficiario: string | null;
+  // Egresos: categoría del gasto (Luz/Agua/Internet/texto libre si "Otros").
+  // No es forma de pago — es la razón del gasto, un eje aparte.
+  razon_egreso: string | null;
 }
 
 export interface DiaSemana {

@@ -57,16 +57,25 @@ export default async function ReportesPage({
         Genera el reporte de movimientos de una cuenta o de un tercero en un rango de fechas, listo para imprimir en A4.
       </p>
 
+      <div className="flex gap-1.5 mb-4">
+        <Link
+          href="/reportes?modo=cuenta"
+          className={"rounded-[9px] border px-3.5 py-2 text-[12.5px] font-bold " + (modo === "cuenta" ? "bg-carbon border-carbon text-white" : "bg-white border-border text-[#475069] hover:border-primary")}
+        >
+          Por cuenta
+        </Link>
+        <Link
+          href="/reportes?modo=tercero"
+          className={"rounded-[9px] border px-3.5 py-2 text-[12.5px] font-bold " + (modo === "tercero" ? "bg-carbon border-carbon text-white" : "bg-white border-border text-[#475069] hover:border-primary")}
+        >
+          Por Personal
+        </Link>
+      </div>
+
       <div className="card">
         <div className="card-b">
           <form method="get" className="flex gap-3 flex-wrap items-end">
-            <div className="field mb-0">
-              <label className="flabel">Reportar por</label>
-              <select name="modo" defaultValue={modo} className="finput">
-                <option value="cuenta">Cuenta</option>
-                <option value="tercero">Personal</option>
-              </select>
-            </div>
+            <input type="hidden" name="modo" value={modo} />
             {modo === "cuenta" ? (
               <div className="field mb-0" style={{ minWidth: 240 }}>
                 <label className="flabel flabel-req">Cuenta</label>

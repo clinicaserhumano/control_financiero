@@ -68,6 +68,10 @@ export async function crearMovimiento(_prev: MovimientoFormState, formData: Form
   const tipoMovimientoId = String(formData.get("tipo_movimiento_id") || "");
   const terceroId = String(formData.get("tercero_id") || "") || null;
   const pagador = String(formData.get("pagador") || "").trim() || null;
+  const beneficiario = String(formData.get("beneficiario") || "").trim() || null;
+  const razonRadio = String(formData.get("razon_egreso_radio") || "").trim();
+  const razonOtros = String(formData.get("razon_egreso_otros") || "").trim();
+  const razonEgreso = razonRadio === "Otros" ? razonOtros || null : razonRadio || null;
   const monto = parseFloat(String(formData.get("monto") || ""));
   const fecha = String(formData.get("fecha") || "");
   const concepto = String(formData.get("concepto") || "").trim() || null;
@@ -113,6 +117,8 @@ export async function crearMovimiento(_prev: MovimientoFormState, formData: Form
     descuento,
     observaciones,
     pagador: tipo === "ingreso" ? pagador : null,
+    beneficiario: tipo === "egreso" ? beneficiario : null,
+    razon_egreso: tipo === "egreso" ? razonEgreso : null,
   });
   if (error) return { error: "No se pudo guardar el movimiento." };
 

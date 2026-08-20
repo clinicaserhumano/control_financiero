@@ -65,6 +65,7 @@ export default function FormularioMovimiento(props: Props) {
   const [monto, setMonto] = useState(props.modo === "confirmar" ? String(props.movimiento.monto) : "");
   const [confirmarAhora, setConfirmarAhora] = useState(true);
   const [descuento, setDescuento] = useState("");
+  const [razonEgreso, setRazonEgreso] = useState("");
 
   const letras = (() => {
     const v = parseFloat(monto);
@@ -183,22 +184,74 @@ export default function FormularioMovimiento(props: Props) {
                 </div>
               ) : (
                 !props.terceroFijo && (
-                  <div className="field">
-                    <label className="flabel" htmlFor="tercero_id">
-                      A favor de (opcional)
-                    </label>
-                    <select id="tercero_id" name="tercero_id" className="finput">
-                      <option value="">— Ninguno —</option>
-                      {(props.terceros ?? []).map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {nombreCompleto(t)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <>
+                    <div className="field">
+                      <label className="flabel" htmlFor="tercero_id">
+                        A favor de — Personal (opcional)
+                      </label>
+                      <select id="tercero_id" name="tercero_id" className="finput">
+                        <option value="">— Ninguno —</option>
+                        {(props.terceros ?? []).map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {nombreCompleto(t)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="field">
+                      <label className="flabel" htmlFor="beneficiario">
+                        O escribe un nombre (compra puntual, opcional)
+                      </label>
+                      <input
+                        id="beneficiario"
+                        name="beneficiario"
+                        type="text"
+                        placeholder="Ej: Ferretería López"
+                        className="finput"
+                      />
+                    </div>
+                  </>
                 )
               )}
               {props.terceroFijo && <input type="hidden" name="tercero_id" value={props.terceroFijo.id} />}
+
+              {esEgreso && (
+                <div className="field">
+                  <label className="flabel">Razón del egreso (opcional)</label>
+                  <div className="flex gap-4 flex-wrap text-[12.5px] font-semibold text-[#33415c]">
+                    {(["Luz", "Agua", "Internet", "Otros"] as const).map((op) => (
+                      <label key={op} className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="razon_egreso_radio"
+                          value={op}
+                          checked={razonEgreso === op}
+                          onChange={() => setRazonEgreso(op)}
+                        />
+                        {op}
+                      </label>
+                    ))}
+                    {razonEgreso && (
+                      <button
+                        type="button"
+                        className="text-[11px] text-muted underline"
+                        onClick={() => setRazonEgreso("")}
+                      >
+                        Quitar
+                      </button>
+                    )}
+                  </div>
+                  {razonEgreso === "Otros" && (
+                    <input
+                      name="razon_egreso_otros"
+                      type="text"
+                      placeholder="¿Cuál razón?"
+                      className="finput mt-2"
+                      required
+                    />
+                  )}
+                </div>
+              )}
 
               {esEgreso && (
                 <div className="field">

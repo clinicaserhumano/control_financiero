@@ -57,7 +57,9 @@ export default async function ImprimirMovimientoPage({ params }: { params: Promi
             <tr>
               <td style={{ width: "62%" }}>
                 <span className="lbl">{esEgreso ? "A favor de (beneficiario)" : "Recibido de"}</span>
-                <span className="v">{esEgreso ? (m.tercero ? nombreCompleto(m.tercero) : "—") : m.pagador || "—"}</span>
+                <span className="v">
+                  {esEgreso ? (m.tercero ? nombreCompleto(m.tercero) : m.beneficiario || "—") : m.pagador || "—"}
+                </span>
               </td>
               <td style={{ width: "38%" }}>
                 <span className="lbl">Fecha</span>
@@ -91,6 +93,16 @@ export default async function ImprimirMovimientoPage({ params }: { params: Promi
                 <span className="letras">{letras}</span>
               </td>
             </tr>
+            {m.razon_egreso && (
+              <tr>
+                <td colSpan={2}>
+                  <span className="lbl">Razón del egreso</span>
+                  <span className="v" style={{ fontWeight: 500 }}>
+                    {m.razon_egreso}
+                  </span>
+                </td>
+              </tr>
+            )}
             {m.concepto && (
               <tr>
                 <td colSpan={2}>
