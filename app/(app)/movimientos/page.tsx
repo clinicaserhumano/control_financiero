@@ -10,7 +10,7 @@ const PAGINAS_OPCIONES = ["5", "10", "50", "todos"];
 
 type MovConRelaciones = MovimientoFinanciero & {
   tipo_movimiento: { nombre: string } | null;
-  tercero: { nombre: string; apellido: string | null } | null;
+  tercero: { nombre: string; apellido: string | null; activo: boolean } | null;
   cuenta: { empresa: string; banco: string; numero: string } | null;
 };
 
@@ -83,7 +83,7 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
 
   let query = supabase
     .from("movimientos_financieros")
-    .select("*, tipo_movimiento:tipos_movimiento(nombre), tercero:terceros(nombre,apellido), cuenta:cuentas(empresa,banco,numero)")
+    .select("*, tipo_movimiento:tipos_movimiento(nombre), tercero:terceros(nombre,apellido,activo), cuenta:cuentas(empresa,banco,numero)")
     .eq("tipo", tipo);
   if (sp.cuenta) query = query.eq("cuenta_id", sp.cuenta);
   if (sp.tercero && tipo === "egreso") query = query.eq("tercero_id", sp.tercero);
@@ -266,11 +266,28 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                           <td>{fmtDate(m.fecha)}</td>
                           <td>{m.tipo_movimiento?.nombre || "—"}</td>
                           <td>
-                            {tipo === "ingreso"
-                              ? m.pagador || "—"
-                              : m.tercero
-                                ? nombreCompleto(m.tercero)
-                                : m.beneficiario || "—"}
+                            <span
+                              className={
+                                tipo === "egreso" && m.tercero
+                                  ? m.tercero.activo
+                                    ? "font-semibold text-primary-dark"
+                                    : "font-semibold text-muted"
+                                  : ""
+                              }
+                              title={
+                                tipo === "egreso" && m.tercero
+                                  ? m.tercero.activo
+                                    ? "Personal/proveedor registrado y activo"
+                                    : "Personal/proveedor registrado pero dado de baja"
+                                  : undefined
+                              }
+                            >
+                              {tipo === "ingreso"
+                                ? m.pagador || "—"
+                                : m.tercero
+                                  ? nombreCompleto(m.tercero)
+                                  : m.beneficiario || "—"}
+                            </span>
                             {tipo === "egreso" && m.razon_egreso && (
                               <div className="text-[10px] font-normal text-muted">{m.razon_egreso}</div>
                             )}
