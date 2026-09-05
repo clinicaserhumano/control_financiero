@@ -27,7 +27,14 @@ export async function guardarTercero(_prev: TerceroFormState, formData: FormData
     return { error: "Completa el grupo y el nombre." };
   }
 
-  const campos: TerceroInsert = { tipo, nombre, apellido, cedula_ruc, tarea, cuenta_id };
+  let horario: { dia: string; entrada: string; salida: string }[] = [];
+  try {
+    horario = JSON.parse(String(formData.get("horario") || "[]")).filter((h: { entrada: string; salida: string }) => h.entrada || h.salida);
+  } catch {
+    horario = [];
+  }
+
+  const campos: TerceroInsert = { tipo, nombre, apellido, cedula_ruc, tarea, cuenta_id, horario };
 
   if (tipo === "empleado") {
     const sueldo = parseFloat(String(formData.get("sueldo") || ""));

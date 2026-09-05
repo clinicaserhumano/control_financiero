@@ -17,6 +17,12 @@ export interface Cuenta {
   creado_en: string;
 }
 
+export interface HorarioDia {
+  dia: string;
+  entrada: string;
+  salida: string;
+}
+
 export interface Tercero {
   id: string;
   tipo: TerceroTipo;
@@ -29,6 +35,7 @@ export interface Tercero {
   horas: number | null;
   precio_hora: number | null;
   activo: boolean;
+  horario: HorarioDia[];
   creado_en: string;
 }
 

@@ -6,7 +6,9 @@ import { guardarTercero, type TerceroFormState } from "./actions";
 import { TERCERO_TABS, type TerceroGrupo } from "@/lib/terceros";
 import { useEsAdmin } from "@/lib/auth/role-context";
 import { BotonAdmin } from "@/lib/auth/boton-admin";
-import type { Cuenta, Tercero } from "@/lib/types";
+import type { Cuenta, HorarioDia, Tercero } from "@/lib/types";
+
+const DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"] as const;
 
 export default function TerceroForm({
   grupoActivo,
@@ -20,9 +22,13 @@ export default function TerceroForm({
   const [state, formAction, pending] = useActionState<TerceroFormState, FormData>(guardarTercero, null);
   const [tipo, setTipo] = useState<string>(terceroEditando?.tipo || grupoActivo);
   const esServicios = tipo === "empleado";
+  const tieneHorario = tipo === "empleado" || tipo === "afiliado";
   const [sueldo, setSueldo] = useState(terceroEditando?.sueldo?.toString() || "");
   const [horas, setHoras] = useState(terceroEditando?.horas?.toString() || "160");
   const [precioHora, setPrecioHora] = useState(terceroEditando?.precio_hora?.toString() || "");
+  const [horario, setHorario] = useState<HorarioDia[]>(() =>
+    DIAS_SEMANA.map((dia) => terceroEditando?.horario?.find((h) => h.dia === dia) ?? { dia, entrada: "", salida: "" })
+  );
   const esAdmin = useEsAdmin();
 
   function recalcularPrecio(nuevoSueldo: string, nuevasHoras: string) {
@@ -170,6 +176,33 @@ export default function TerceroForm({
                 />
                 <div className="fhint">Se calcula solo; puedes ajustarlo</div>
               </div>
+            </div>
+          )}
+
+          {tieneHorario && (
+            <div className="field">
+              <label className="flabel">Horario habitual (opcional)</label>
+              <input type="hidden" name="horario" value={JSON.stringify(horario)} />
+              <div className="flex flex-col gap-1.5">
+                {horario.map((h, i) => (
+                  <div key={h.dia} className="grid grid-cols-[90px_1fr_1fr] gap-2 items-center">
+                    <span className="text-[12.5px] font-semibold">{h.dia}</span>
+                    <input
+                      type="time"
+                      value={h.entrada}
+                      onChange={(e) => setHorario((prev) => prev.map((x, j) => (j === i ? { ...x, entrada: e.target.value } : x)))}
+                      className="finput"
+                    />
+                    <input
+                      type="time"
+                      value={h.salida}
+                      onChange={(e) => setHorario((prev) => prev.map((x, j) => (j === i ? { ...x, salida: e.target.value } : x)))}
+                      className="finput"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="fhint">Se puede dejar en blanco y completar después.</div>
             </div>
           )}
           </fieldset>

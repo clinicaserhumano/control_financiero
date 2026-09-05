@@ -45,6 +45,7 @@ export interface Database {
           horas: number | null;
           precio_hora: number | null;
           activo: boolean;
+          horario: { dia: string; entrada: string; salida: string }[];
           creado_en: string;
         };
         Insert: {
@@ -59,6 +60,7 @@ export interface Database {
           horas?: number | null;
           precio_hora?: number | null;
           activo?: boolean;
+          horario?: { dia: string; entrada: string; salida: string }[];
           creado_en?: string;
         };
         Update: Partial<Database['public']['Tables']['terceros']['Insert']>;
