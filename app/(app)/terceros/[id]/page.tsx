@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { money, fmtDate, totalPorTipoEstado } from "@/lib/calculos";
-import { TERCERO_TIPO_LABEL, nombreCompleto, direccionParaTercero } from "@/lib/terceros";
+import { TERCERO_TIPO_LABEL, nombreCompleto, direccionParaTercero, formatearHorario } from "@/lib/terceros";
 import { EnlaceAdmin } from "@/lib/auth/boton-admin";
 import type { Cuenta, MovimientoFinanciero, Tercero, TipoMovimiento } from "@/lib/types";
 import FormularioMovimiento from "@/components/formulario-movimiento";
@@ -76,6 +76,9 @@ export default async function TerceroDetallePage({
               {tercero.tarea ? ` · ${tercero.tarea}` : ""}
               {tercero.cedula_ruc ? ` · ${tercero.cedula_ruc}` : ""}
             </div>
+            {(tercero.tipo === "empleado" || tercero.tipo === "afiliado") && formatearHorario(tercero.horario) && (
+              <div className="text-[12.5px] text-ink font-semibold mt-1">Horario: {formatearHorario(tercero.horario)}</div>
+            )}
           </div>
           <div className="text-right">
             <div className="text-[11px] uppercase tracking-wide text-muted font-bold">Saldo x pagar</div>
