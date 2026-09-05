@@ -7,8 +7,9 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // api/keep-alive queda afuera: lo llama Vercel Cron sin sesión de
-    // usuario, se autentica con su propio secreto (ver esa ruta).
-    '/((?!_next/static|_next/image|favicon.ico|api/keep-alive|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // api/keep-alive y api/respaldo-semanal quedan afuera: los llama Vercel
+    // Cron sin sesión de usuario, se autentican con su propio secreto (ver
+    // esas rutas).
+    '/((?!_next/static|_next/image|favicon.ico|api/keep-alive|api/respaldo-semanal|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
