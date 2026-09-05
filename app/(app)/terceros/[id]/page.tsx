@@ -31,6 +31,7 @@ export default async function TerceroDetallePage({
   const direccion = direccionParaTercero();
   // "Servicios prestados" = terceros tipo 'empleado' con sueldo asignado (ver lib/terceros.ts).
   const tieneBitacora = tercero.tipo === "empleado" && tercero.sueldo != null;
+  const tieneHorario = tercero.tipo === "empleado" || tercero.tipo === "afiliado";
   const subActiva = tieneBitacora && sub !== "movimientos" ? "bitacora" : "movimientos";
 
   const [{ data: cuentas }, { data: tiposMovimiento }, { data: movimientos }, { data: semanas }] = await Promise.all([
@@ -92,6 +93,11 @@ export default async function TerceroDetallePage({
             <Link href={`/imprimir/terceros/${id}`} className="btn-navy btn-sm">
               ↦ Imprimir reporte
             </Link>
+            {tieneHorario && (
+              <Link href={`/imprimir/terceros/${id}/horario`} className="btn-navy btn-sm">
+                ↦ Imprimir horario
+              </Link>
+            )}
           </div>
         </div>
       </div>
