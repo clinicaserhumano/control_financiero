@@ -228,8 +228,8 @@ export default function AyudaPage() {
 
         <Seccion id="personal" titulo="Personal (Proveedores, Servicios prestados, Personal afiliado)">
           <p>
-            La pestaña Personal reemplaza lo que antes se llamaba Terceros. Tiene 3 grupos, cada uno con su propia
-            pestaña:
+            La pestaña Personal agrupa a todas las personas y empresas con las que trabaja la clínica, en 3 grupos,
+            cada uno con su propia pestaña:
           </p>
           <ul className="list-disc pl-5 flex flex-col gap-1">
             <li>
