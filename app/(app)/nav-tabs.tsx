@@ -23,7 +23,7 @@ export default function NavTabs() {
   const tabs = esAdmin ? [...TABS, TAB_USUARIOS] : TABS;
 
   return (
-    <nav className="flex gap-0.5 bg-carbon-2 px-3.5 overflow-x-auto">
+    <nav className="flex items-center gap-0.5 bg-carbon-2 px-3.5 overflow-x-auto">
       {tabs.map((tab) => {
         const active = tab.match(pathname, tipo);
         return (
@@ -39,6 +39,15 @@ export default function NavTabs() {
           </Link>
         );
       })}
+      <Link
+        href="/ayuda"
+        className={
+          "ml-auto pl-4 pr-1 py-3 text-[12px] font-normal whitespace-nowrap transition-colors " +
+          (pathname.startsWith("/ayuda") ? "text-primary" : "text-primary/70 hover:text-primary")
+        }
+      >
+        Cómo usar
+      </Link>
     </nav>
   );
 }
