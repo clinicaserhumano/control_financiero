@@ -15,7 +15,13 @@ export default function PrintStyles({ tamano }: { tamano: "A5" | "A4" }) {
           padding: 16px; border: 1px solid #E4E2D9; box-shadow: 0 4px 24px rgba(43,36,32,.08); }
       }
       .no-imprimir { }
-      @media print { .no-imprimir { display: none !important; } }
+      @media print {
+        .no-imprimir { display: none !important; }
+        /* Forzar blanco puro sin importar el modo oscuro ni el fondo
+           beige de fondo de pantalla (--color-paper): sin esto, algunos
+           navegadores imprimen ese fondo en vez de blanco. */
+        html, body, .hoja { background: #fff !important; }
+      }
 
       .logo-print { height: 30px; width: auto; display: block; margin-bottom: 8px; }
 
