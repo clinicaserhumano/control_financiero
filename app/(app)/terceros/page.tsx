@@ -43,7 +43,12 @@ export default async function TercerosPage({
   return (
     <div>
       <div className="grid gap-5 lg:grid-cols-[380px_1fr]">
-        <TerceroForm grupoActivo={grupoActivo} cuentas={listaCuentas} terceroEditando={terceroEditando} />
+        <TerceroForm
+          key={terceroEditando?.id ?? "nuevo"}
+          grupoActivo={grupoActivo}
+          cuentas={listaCuentas}
+          terceroEditando={terceroEditando}
+        />
 
         <div>
           <div className="flex gap-1.5 flex-wrap mb-4">

@@ -2,8 +2,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { movimientosConSaldo, saldoCuenta, money, totalPorTipoEstado } from "@/lib/calculos";
 import type { Cuenta, MovimientoFinanciero, Tercero } from "@/lib/types";
+import SeleccionarHorarios from "./seleccionar-horarios";
 
-type ModoReporte = "cuenta" | "tercero" | "general";
+type ModoReporte = "cuenta" | "tercero" | "general" | "horarios";
 
 export default async function ReportesPage({
   searchParams,
@@ -11,7 +12,8 @@ export default async function ReportesPage({
   searchParams: Promise<{ modo?: string; id?: string; desde?: string; hasta?: string }>;
 }) {
   const sp = await searchParams;
-  const modo: ModoReporte = sp.modo === "tercero" ? "tercero" : sp.modo === "general" ? "general" : "cuenta";
+  const modo: ModoReporte =
+    sp.modo === "tercero" ? "tercero" : sp.modo === "general" ? "general" : sp.modo === "horarios" ? "horarios" : "cuenta";
   const supabase = await createClient();
 
   const [{ data: cuentas }, { data: terceros }] = await Promise.all([
@@ -103,8 +105,27 @@ export default async function ReportesPage({
         >
           General (todo)
         </Link>
+        <Link
+          href="/reportes?modo=horarios"
+          className={"rounded-[9px] border px-3.5 py-2 text-[12.5px] font-bold " + (modo === "horarios" ? "bg-carbon border-carbon text-white" : "bg-surface border-border text-[var(--color-muted)] hover:border-primary")}
+        >
+          Horarios
+        </Link>
       </div>
 
+      {modo === "horarios" ? (
+        <div className="card">
+          <div className="card-b">
+            <p className="fhint mb-4">
+              Elige a quiénes incluir e imprime solo su horario establecido (sin el detalle día por día de la
+              bitácora).
+            </p>
+            <SeleccionarHorarios
+              personal={(terceros ?? []).filter((t) => t.tipo === "empleado" || t.tipo === "afiliado")}
+            />
+          </div>
+        </div>
+      ) : (
       <div className="card">
         <div className="card-b">
           <form method="get" className="flex gap-3 flex-wrap items-end">
@@ -170,6 +191,7 @@ export default async function ReportesPage({
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

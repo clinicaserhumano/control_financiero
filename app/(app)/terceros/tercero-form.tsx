@@ -202,7 +202,20 @@ export default function TerceroForm({
                   </div>
                 ))}
               </div>
-              <div className="fhint">Se puede dejar en blanco y completar después.</div>
+              <button
+                type="button"
+                disabled={!horario[0]?.entrada || !horario[0]?.salida}
+                onClick={() => {
+                  const lunes = horario[0];
+                  setHorario((prev) => prev.map((h, i) => (i === 0 ? h : { ...h, entrada: lunes.entrada, salida: lunes.salida })));
+                }}
+                className="btn-ghost btn-sm self-start mt-1 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Repetir horario del Lunes en todos los días
+              </button>
+              <div className="fhint">
+                Puedes dejarlo en blanco y completar después, o ajustar un día específico luego de repetir el horario.
+              </div>
             </div>
           )}
           </fieldset>
