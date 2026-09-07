@@ -20,12 +20,13 @@ export default function PrintStyles({ tamano }: { tamano: "A5" | "A4" }) {
         /* Forzar blanco puro sin importar el modo oscuro ni el fondo
            beige de fondo de pantalla (--color-paper): sin esto, algunos
            navegadores imprimen ese fondo en vez de blanco. */
-        html, body, .hoja { background: #fff !important; }
-        /* El layout normal estira <body> a min-height:100% (pantalla
-           completa) para que el pie de página se vea bien; al imprimir
-           eso deja un área vacía debajo de la hoja con ese mismo fondo.
-           Se anula para que el alto sea solo el del contenido real. */
-        html, body { height: auto !important; min-height: 0 !important; }
+        html, body, .hoja, .print-fondo { background: #fff !important; }
+        /* .print-fondo (envoltura de estas páginas) y <body> están
+           estirados a min-height:100vh para el efecto "hoja sobre un
+           escritorio" en pantalla; al imprimir eso dejaba un área vacía
+           debajo con ese mismo fondo gris. Se anula el alto para que
+           ocupe solo lo que realmente tiene contenido. */
+        html, body, .print-fondo { height: auto !important; min-height: 0 !important; }
       }
 
       .logo-print { height: 30px; width: auto; display: block; margin-bottom: 8px; }

@@ -10,5 +10,5 @@ export default async function PrintLayout({ children }: { children: React.ReactN
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  return <div className="bg-[#e4e2d9] min-h-screen">{children}</div>;
+  return <div className="print-fondo bg-[#e4e2d9] min-h-screen">{children}</div>;
 }
