@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { crearMovimiento, confirmarPago, type MovimientoFormState } from "@/app/(app)/movimientos/actions";
 import { numeroALetras, money, fmtDate, todayISO } from "@/lib/calculos";
 import { nombreCompleto } from "@/lib/terceros";
@@ -55,8 +56,32 @@ type Props =
     };
 
 export default function FormularioMovimiento(props: Props) {
-  const action = props.modo === "crear" ? crearMovimiento : confirmarPago;
-  const [state, formAction, pending] = useActionState<MovimientoFormState, FormData>(action, null);
+  const router = useRouter();
+  const [crearState, crearFormAction, crearPending] = useActionState<MovimientoFormState, FormData>(crearMovimiento, null);
+  const [confirmarPending, startConfirmarTransition] = useTransition();
+  const [confirmarError, setConfirmarError] = useState("");
+
+  // Modo "confirmar" no usa useActionState porque, al terminar bien, hay
+  // que preguntar si se quiere imprimir antes de decidir a dónde navegar
+  // (con redirect() del lado del servidor no se puede interceptar eso).
+  function submitConfirmar(formData: FormData) {
+    startConfirmarTransition(async () => {
+      const result = await confirmarPago(null, formData);
+      if (result && "error" in result) {
+        setConfirmarError(result.error);
+        return;
+      }
+      setConfirmarError("");
+      if (result) {
+        const imprimir = window.confirm("Pago registrado correctamente. ¿Quieres imprimir el comprobante ahora?");
+        router.push(imprimir ? `/imprimir/movimientos/${result.movimientoId}` : result.redirectTo);
+      }
+    });
+  }
+
+  const formAction = props.modo === "crear" ? crearFormAction : submitConfirmar;
+  const pending = props.modo === "crear" ? crearPending : confirmarPending;
+  const state = props.modo === "crear" ? crearState : confirmarError ? { error: confirmarError } : null;
 
   const [tipoMovimientoId, setTipoMovimientoId] = useState("");
   const tipoSeleccionado = useMemo(

@@ -7,7 +7,8 @@ import { EnlaceAdmin } from "@/lib/auth/boton-admin";
 import type { Cuenta, MovimientoFinanciero, Tercero, TipoMovimiento } from "@/lib/types";
 import FormularioMovimiento from "@/components/formulario-movimiento";
 import ToggleActivoButton from "../toggle-activo-button";
-import WeekCard, { BotonAgregarSemana } from "./week-card";
+import { BotonAgregarSemana } from "./week-card";
+import BitacoraSemanas from "./bitacora-semanas";
 
 type MovConRelaciones = MovimientoFinanciero & {
   tipo_movimiento: { nombre: string } | null;
@@ -136,17 +137,7 @@ export default async function TerceroDetallePage({
               Agrega una semana para cargar la asistencia.
             </div>
           ) : (
-            semanasOrdenadas.map((s) => (
-              <WeekCard
-                key={s.id}
-                semanaId={s.id}
-                terceroId={id}
-                etiquetaInicial={s.etiqueta || ""}
-                diasIniciales={s.dias}
-                precioHora={tercero.precio_hora || 0}
-                movimiento={s.movimiento}
-              />
-            ))
+            <BitacoraSemanas semanas={semanasOrdenadas} terceroId={id} precioHora={tercero.precio_hora || 0} />
           )}
         </div>
       ) : (

@@ -111,3 +111,61 @@ export async function cargarSemana(_prev: CargarSemanaState, formData: FormData)
   revalidatePath("/movimientos");
   return null;
 }
+
+export type CargarConjuntoState = { error: string } | null;
+
+// Combina varias semanas todavía sin cargar en un solo cargo pendiente (una
+// sola cuenta por pagar), en vez de una por semana — útil cuando se acumuló
+// más de una semana sin pagar y se va a saldar todo junto.
+export async function cargarSemanasEnConjunto(_prev: CargarConjuntoState, formData: FormData): Promise<CargarConjuntoState> {
+  const chk = await requireAdmin();
+  if (!chk.ok) return { error: chk.error };
+
+  const terceroId = String(formData.get("tercero_id") || "");
+  const fecha = String(formData.get("fecha") || todayISO());
+  const semanaIds = formData.getAll("semana_ids").map(String).filter(Boolean);
+  if (semanaIds.length < 1) return { error: "Selecciona al menos una semana." };
+
+  const supabase = await createClient();
+  const [{ data: semanas }, { data: tercero }] = await Promise.all([
+    supabase.from("semanas").select("id,etiqueta,dias,movimiento_id").in("id", semanaIds),
+    supabase.from("terceros").select("precio_hora").eq("id", terceroId).single(),
+  ]);
+  if (!semanas || !tercero) return { error: "No se encontraron las semanas o la persona." };
+  if (semanas.some((s) => s.movimiento_id)) return { error: "Una de las semanas seleccionadas ya estaba cargada; actualiza la página." };
+
+  let total = 0;
+  const conceptos: string[] = [];
+  for (const s of semanas) {
+    const { valor } = calcularHorasSemana(s.dias, tercero.precio_hora || 0);
+    total += valor;
+    conceptos.push(s.etiqueta || "Servicios prestados");
+  }
+  total = Math.round(total * 100) / 100;
+  if (total <= 0) return { error: "Las semanas seleccionadas no tienen horas registradas." };
+
+  const { data: nuevo, error } = await supabase
+    .from("movimientos_financieros")
+    .insert({
+      fecha,
+      tipo: "egreso",
+      cuenta_id: null,
+      tercero_id: terceroId,
+      monto: total,
+      estado: "pendiente",
+      concepto: conceptos.join(" + "),
+      origen: "nomina",
+      vinculo_id: null,
+    })
+    .select("id")
+    .single();
+  if (error || !nuevo) return { error: "No se pudo crear el cargo conjunto." };
+
+  const { error: errorLink } = await supabase.from("semanas").update({ movimiento_id: nuevo.id }).in("id", semanaIds);
+  if (errorLink) return { error: "El cargo se creó pero no se pudo enlazar todas las semanas." };
+
+  revalidatePath(`/terceros/${terceroId}`);
+  revalidatePath("/movimientos");
+  revalidatePath("/cuentas-por-pagar");
+  return null;
+}

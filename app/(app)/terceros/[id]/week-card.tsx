@@ -29,6 +29,9 @@ export default function WeekCard({
   diasIniciales,
   precioHora,
   movimiento,
+  seleccionable = false,
+  seleccionada = false,
+  onToggleSeleccion,
 }: {
   semanaId: string;
   terceroId: string;
@@ -36,6 +39,9 @@ export default function WeekCard({
   diasIniciales: DiaSemana[];
   precioHora: number;
   movimiento: MovimientoLigado;
+  seleccionable?: boolean;
+  seleccionada?: boolean;
+  onToggleSeleccion?: () => void;
 }) {
   const [etiqueta, setEtiqueta] = useState(etiquetaInicial);
   const [dias, setDias] = useState<DiaSemana[]>(diasIniciales);
@@ -56,6 +62,15 @@ export default function WeekCard({
   return (
     <div className="border border-border rounded-[10px] mb-4 overflow-hidden">
       <div className="bg-[var(--color-surface-2)] px-3.5 py-2.5 flex items-center gap-2.5 flex-wrap">
+        {seleccionable && (
+          <input
+            type="checkbox"
+            disabled={!esAdmin}
+            checked={seleccionada}
+            onChange={onToggleSeleccion}
+            title="Seleccionar para cargar en conjunto con otras semanas"
+          />
+        )}
         <span className="font-bold text-[13px] text-ink">Semana:</span>
         <input
           type="text"

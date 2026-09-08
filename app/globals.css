@@ -339,6 +339,31 @@ body {
     background: var(--color-danger-bg) !important;
     color: var(--color-danger) !important;
   }
+
+  /* Bolita naranja parpadeante: Personal con saldo pendiente por pagar. */
+  .dot-pendiente {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 999px;
+    background: var(--color-primary);
+    animation: parpadeo-pendiente 1.4s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dot-pendiente {
+      animation: none;
+    }
+  }
+}
+
+@keyframes parpadeo-pendiente {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
 }
 
 @media print {

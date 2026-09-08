@@ -119,8 +119,12 @@ export default async function TercerosPage({
                         return (
                           <tr key={t.id}>
                             <td>
-                              <Link href={`/terceros/${t.id}`} className="font-bold text-ink hover:text-primary">
+                              <Link
+                                href={`/terceros/${t.id}`}
+                                className="font-bold text-ink hover:text-primary inline-flex items-center gap-1.5"
+                              >
                                 {nombreCompleto(t)}
+                                {pendiente > 0 && <span className="dot-pendiente" title="Tiene saldo pendiente por pagar" />}
                               </Link>
                             </td>
                             <td className="mono text-muted">{t.cedula_ruc || "—"}</td>

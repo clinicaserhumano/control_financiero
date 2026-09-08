@@ -8,6 +8,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type MovimientoFormState = { error: string } | null;
+export type ConfirmarPagoState = { error: string } | { ok: true; movimientoId: string; redirectTo: string } | null;
 
 // Los campos dinámicos de <FormularioMovimiento> viajan como "campo__<clave>"
 // para no chocar con los campos fijos del formulario.
@@ -130,7 +131,7 @@ export async function crearMovimiento(_prev: MovimientoFormState, formData: Form
   redirect(redirectTo);
 }
 
-export async function confirmarPago(_prev: MovimientoFormState, formData: FormData): Promise<MovimientoFormState> {
+export async function confirmarPago(_prev: ConfirmarPagoState, formData: FormData): Promise<ConfirmarPagoState> {
   const chk = await requireAdmin();
   if (!chk.ok) return { error: chk.error };
 
@@ -187,7 +188,7 @@ export async function confirmarPago(_prev: MovimientoFormState, formData: FormDa
   if (error) return { error: "No se pudo registrar el pago." };
 
   revalidarTodo(cuentaId, original?.tercero_id ?? null);
-  redirect(redirectTo);
+  return { ok: true, movimientoId, redirectTo };
 }
 
 export async function anularMovimiento(id: string) {
