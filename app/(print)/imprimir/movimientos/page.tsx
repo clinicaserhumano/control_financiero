@@ -34,9 +34,9 @@ export default async function ImprimirMovimientosPage({ searchParams }: { search
   query = query.order("fecha", { ascending: true }).order("creado_en", { ascending: true });
 
   const { data: movimientos } = await query;
-  const lista = (movimientos ?? []) as unknown as MovConRelaciones[];
-  // Confirmado y pendiente se muestran por separado (un pendiente aún no salió
-  // de ninguna cuenta); los anulados quedan en el listado (auditoría) pero no suman.
+  // Los anulados no se imprimen: un reporte impreso es para ver lo real
+  // (confirmado y pendiente), no el historial de correcciones.
+  const lista = ((movimientos ?? []) as unknown as MovConRelaciones[]).filter((m) => m.estado !== "anulado");
   const totalConfirmado = lista.filter((m) => m.estado === "confirmado").reduce((s, m) => s + Number(m.monto || 0), 0);
   const totalPendiente = lista.filter((m) => m.estado === "pendiente").reduce((s, m) => s + Number(m.monto || 0), 0);
 
@@ -92,7 +92,7 @@ export default async function ImprimirMovimientosPage({ searchParams }: { search
                 </td>
                 <td>{m.concepto || "—"}</td>
                 <td>{m.cuenta ? `${m.cuenta.banco} · ${m.cuenta.numero}` : "—"}</td>
-                <td>{m.estado === "confirmado" ? "Confirmado" : m.estado === "pendiente" ? "Pendiente" : "Anulado"}</td>
+                <td>{m.estado === "confirmado" ? "Confirmado" : "Pendiente"}</td>
                 <td className="rt">{money(m.monto)}</td>
               </tr>
             ))}

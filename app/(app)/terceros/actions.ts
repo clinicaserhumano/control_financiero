@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import type { TerceroTipo } from "@/lib/types";
+import type { DiaPago, TerceroTipo } from "@/lib/types";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type TerceroFormState = { error: string } | null;
@@ -71,6 +71,15 @@ export async function toggleActivoTercero(id: string, activo: boolean) {
   if (!chk.ok) return;
   const supabase = await createClient();
   await supabase.from("terceros").update({ activo }).eq("id", id);
+  revalidatePath("/terceros");
+  revalidatePath(`/terceros/${id}`);
+}
+
+export async function guardarDiaPago(id: string, diaPago: DiaPago | null) {
+  const chk = await requireAdmin();
+  if (!chk.ok) return;
+  const supabase = await createClient();
+  await supabase.from("terceros").update({ dia_pago: diaPago }).eq("id", id);
   revalidatePath("/terceros");
   revalidatePath(`/terceros/${id}`);
 }

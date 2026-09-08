@@ -48,5 +48,9 @@ export async function anularSeleccionados(ids: string[]) {
   const supabase = await createClient();
   const { data: afectados } = await supabase.from("movimientos_financieros").select("tercero_id").in("id", ids);
   await supabase.from("movimientos_financieros").update({ estado: "anulado" }).in("id", ids).eq("estado", "pendiente");
+  // Los que venían de bitácora se desligan para que sus semanas vuelvan a
+  // quedar "sin cargar" (ver la misma lógica en anularMovimiento); no afecta
+  // a los demás, ninguna semana apunta a un movimiento que no sea de nómina.
+  await supabase.from("semanas").update({ movimiento_id: null }).in("movimiento_id", ids);
   revalidarTodo((afectados ?? []).map((m) => m.tercero_id));
 }

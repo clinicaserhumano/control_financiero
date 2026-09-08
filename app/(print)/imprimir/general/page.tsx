@@ -33,7 +33,11 @@ export default async function ImprimirGeneralPage({
   ]);
 
   const lista = (movimientos ?? []) as unknown as MovConRelaciones[];
-  const enRango = lista.filter((m) => (!desde || m.fecha >= desde) && (!hasta || m.fecha <= hasta));
+  // Los anulados no se imprimen en el detalle (sí se necesitan sin filtrar
+  // para saldoCuenta, que ya los ignora internamente al calcular el saldo).
+  const enRango = lista
+    .filter((m) => (!desde || m.fecha >= desde) && (!hasta || m.fecha <= hasta))
+    .filter((m) => m.estado !== "anulado");
 
   const filasCuentas = (cuentas ?? []).map((c: Cuenta) => {
     const movsCuenta = lista.filter((m) => m.cuenta_id === c.id);
@@ -143,7 +147,7 @@ export default async function ImprimirGeneralPage({
                       <td>{fmtDate(m.fecha)}</td>
                       <td>{m.tipo === "ingreso" ? "Ingreso" : "Egreso"}</td>
                       <td>{m.concepto || m.tipo_movimiento?.nombre || "—"}</td>
-                      <td>{m.estado === "confirmado" ? "Confirmado" : m.estado === "pendiente" ? "Pendiente" : "Anulado"}</td>
+                      <td>{m.estado === "confirmado" ? "Confirmado" : "Pendiente"}</td>
                       <td className="rt">{money(m.monto)}</td>
                     </tr>
                   ))

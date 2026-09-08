@@ -7,6 +7,7 @@ import { obtenerPerfilActual } from "@/lib/auth/perfil";
 import { RolProvider } from "@/lib/auth/role-context";
 import NavTabs from "./nav-tabs";
 import ThemeToggle from "./theme-toggle";
+import Campanita from "./campanita";
 import { signOut } from "./actions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -38,6 +39,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               {ROL_LABEL[rol]}
             </span>
           </div>
+          <Campanita />
           <ThemeToggle />
           <form action={signOut}>
             <button type="submit" className="btn-ghost btn-sm">

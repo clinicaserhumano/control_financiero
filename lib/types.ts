@@ -23,6 +23,18 @@ export interface HorarioDia {
   salida: string;
 }
 
+// dia: día de la semana (0=Domingo..6=Sábado) si frecuencia es 'semanal', o
+// día del mes (1-31) si es 'mensual'. Se ignora si es 'quincenal'.
+// intervalo_dias / fecha_referencia: solo para 'quincenal' — cada cuántos
+// días se repite (editable: 11, 12, 13, 14...) y la fecha (AAAA-MM-DD) del
+// próximo pago, para casos que no caen justo cada 14/15 días exactos.
+export interface DiaPago {
+  frecuencia: 'semanal' | 'quincenal' | 'mensual';
+  dia: number;
+  intervalo_dias: number | null;
+  fecha_referencia: string | null;
+}
+
 export interface Tercero {
   id: string;
   tipo: TerceroTipo;
@@ -36,6 +48,7 @@ export interface Tercero {
   precio_hora: number | null;
   activo: boolean;
   horario: HorarioDia[];
+  dia_pago: DiaPago | null;
   creado_en: string;
 }
 

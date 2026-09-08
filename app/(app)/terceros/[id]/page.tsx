@@ -10,6 +10,7 @@ import ToggleActivoButton from "../toggle-activo-button";
 import { BotonAgregarSemana } from "./week-card";
 import BitacoraSemanas from "./bitacora-semanas";
 import AnularButton from "../../movimientos/anular-button";
+import AsignarDiaPago from "./asignar-dia-pago";
 
 type MovConRelaciones = MovimientoFinanciero & {
   tipo_movimiento: { nombre: string } | null;
@@ -100,6 +101,7 @@ export default async function TerceroDetallePage({
                 ↦ Imprimir horario
               </Link>
             )}
+            {tieneHorario && <AsignarDiaPago terceroId={tercero.id} diaPagoInicial={tercero.dia_pago} />}
           </div>
         </div>
       </div>

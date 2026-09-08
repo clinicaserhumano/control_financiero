@@ -6,6 +6,7 @@ import { nombreCompleto } from "@/lib/terceros";
 import { marcarPagadosMasivo, anularSeleccionados, type MarcarPagadosState } from "./actions";
 import { useEsAdmin } from "@/lib/auth/role-context";
 import { BotonAdmin, EnlaceAdmin } from "@/lib/auth/boton-admin";
+import AnularButton from "../movimientos/anular-button";
 import type { Cuenta } from "@/lib/types";
 
 type Pendiente = {
@@ -82,9 +83,12 @@ export default function TablaPendientes({ pendientes, cuentas }: { pendientes: P
                   <td className="text-[12px] text-muted">{p.concepto || "—"}</td>
                   <td className="td-num">{money(p.monto)}</td>
                   <td>
-                    <EnlaceAdmin href={`/movimientos/${p.id}/pagar?volver=/cuentas-por-pagar`} className="btn-gold btn-sm">
-                      Registrar pago
-                    </EnlaceAdmin>
+                    <div className="flex gap-1.5 justify-end">
+                      <EnlaceAdmin href={`/movimientos/${p.id}/pagar?volver=/cuentas-por-pagar`} className="btn-gold btn-sm">
+                        Registrar pago
+                      </EnlaceAdmin>
+                      <AnularButton id={p.id} />
+                    </div>
                   </td>
                 </tr>
               ))

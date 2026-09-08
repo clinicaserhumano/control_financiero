@@ -32,7 +32,9 @@ export default async function ImprimirTerceroPage({
   ]);
   if (!tercero) notFound();
 
-  const lista = (movimientos ?? []) as unknown as MovConNombres[];
+  // Los anulados no se imprimen: un reporte impreso es para ver lo real
+  // (confirmado y pendiente), no el historial de correcciones.
+  const lista = ((movimientos ?? []) as unknown as MovConNombres[]).filter((m) => m.estado !== "anulado");
   const filas = lista.filter((m) => (!desde || m.fecha >= desde) && (!hasta || m.fecha <= hasta));
   const pendiente = totalPorTipoEstado(lista, "egreso", "pendiente");
   const confirmado = totalPorTipoEstado(filas, "egreso", "confirmado");
@@ -86,7 +88,7 @@ export default async function ImprimirTerceroPage({
                 <td>{fmtDate(m.fecha)}</td>
                 <td>{m.tipo_movimiento?.nombre || (m.origen === "nomina" ? "Nómina" : "—")}</td>
                 <td>{m.concepto || "—"}</td>
-                <td>{m.estado === "confirmado" ? "Confirmado" : m.estado === "pendiente" ? "Pendiente" : "Anulado"}</td>
+                <td>{m.estado === "confirmado" ? "Confirmado" : "Pendiente"}</td>
                 <td className="rt">{money(m.monto)}</td>
               </tr>
             ))}

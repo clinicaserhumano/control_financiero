@@ -46,6 +46,12 @@ export interface Database {
           precio_hora: number | null;
           activo: boolean;
           horario: { dia: string; entrada: string; salida: string }[];
+          dia_pago: {
+            frecuencia: 'semanal' | 'quincenal' | 'mensual';
+            dia: number;
+            intervalo_dias: number | null;
+            fecha_referencia: string | null;
+          } | null;
           creado_en: string;
         };
         Insert: {
@@ -61,6 +67,12 @@ export interface Database {
           precio_hora?: number | null;
           activo?: boolean;
           horario?: { dia: string; entrada: string; salida: string }[];
+          dia_pago?: {
+            frecuencia: 'semanal' | 'quincenal' | 'mensual';
+            dia: number;
+            intervalo_dias: number | null;
+            fecha_referencia: string | null;
+          } | null;
           creado_en?: string;
         };
         Update: Partial<Database['public']['Tables']['terceros']['Insert']>;
