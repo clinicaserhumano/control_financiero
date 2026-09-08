@@ -9,6 +9,7 @@ import FormularioMovimiento from "@/components/formulario-movimiento";
 import ToggleActivoButton from "../toggle-activo-button";
 import { BotonAgregarSemana } from "./week-card";
 import BitacoraSemanas from "./bitacora-semanas";
+import AnularButton from "../../movimientos/anular-button";
 
 type MovConRelaciones = MovimientoFinanciero & {
   tipo_movimiento: { nombre: string } | null;
@@ -206,11 +207,14 @@ export default async function TerceroDetallePage({
                             )}
                           </td>
                           <td>
-                            {m.estado === "pendiente" && (
-                              <EnlaceAdmin href={`/movimientos/${m.id}/pagar?volver=/terceros/${id}`} className="btn-gold btn-sm">
-                                Registrar pago
-                              </EnlaceAdmin>
-                            )}
+                            <div className="flex gap-1.5 justify-end">
+                              {m.estado === "pendiente" && (
+                                <EnlaceAdmin href={`/movimientos/${m.id}/pagar?volver=/terceros/${id}`} className="btn-gold btn-sm">
+                                  Registrar pago
+                                </EnlaceAdmin>
+                              )}
+                              {m.estado !== "anulado" && <AnularButton id={m.id} />}
+                            </div>
                           </td>
                         </tr>
                       ))}

@@ -197,9 +197,15 @@ export async function anularMovimiento(id: string) {
   const supabase = await createClient();
   const { data: mov } = await supabase
     .from("movimientos_financieros")
-    .select("cuenta_id,tercero_id")
+    .select("cuenta_id,tercero_id,origen")
     .eq("id", id)
     .single();
   await supabase.from("movimientos_financieros").update({ estado: "anulado" }).eq("id", id);
+  // Si el cargo venía de una o varias semanas de bitácora, se desligan para
+  // que vuelvan a quedar "sin cargar" — si no, quedarían apuntando para
+  // siempre a un cargo anulado, sin forma de rehacerlas desde la bitácora.
+  if (mov?.origen === "nomina") {
+    await supabase.from("semanas").update({ movimiento_id: null }).eq("movimiento_id", id);
+  }
   revalidarTodo(mov?.cuenta_id ?? null, mov?.tercero_id ?? null);
 }
