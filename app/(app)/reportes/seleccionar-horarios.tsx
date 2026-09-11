@@ -92,11 +92,11 @@ export default function SeleccionarHorarios({ personal }: { personal: Persona[] 
       <div className="mt-4">
         {seleccionados.size > 0 ? (
           <Link href={`/imprimir/horarios?ids=${[...seleccionados].join(",")}`} className="btn-navy">
-            ↦ Imprimir horario ({seleccionados.size} seleccionado{seleccionados.size === 1 ? "" : "s"})
+            🖨️ Imprimir horario ({seleccionados.size} seleccionado{seleccionados.size === 1 ? "" : "s"})
           </Link>
         ) : (
           <button type="button" disabled className="btn-navy opacity-40 cursor-not-allowed">
-            ↦ Imprimir horario
+            🖨️ Imprimir horario
           </button>
         )}
       </div>

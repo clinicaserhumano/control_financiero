@@ -32,7 +32,7 @@ export function direccionParaTercero(): 'egreso' {
   return 'egreso';
 }
 
-const ORDEN_DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+export const ORDEN_DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
 // "Lunes a Viernes 09:30–17:00 · Sábado 09:00–14:00": agrupa días
 // consecutivos con el mismo horario para que se lea de corrido, en vez de

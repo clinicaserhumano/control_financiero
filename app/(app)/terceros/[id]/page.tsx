@@ -94,11 +94,11 @@ export default async function TerceroDetallePage({
               Editar datos
             </Link>
             <Link href={`/imprimir/terceros/${id}`} className="btn-navy btn-sm">
-              ↦ Imprimir reporte
+              🖨️ Imprimir estado de cuenta
             </Link>
             {tieneHorario && (
               <Link href={`/imprimir/terceros/${id}/horario`} className="btn-navy btn-sm">
-                ↦ Imprimir horario
+                🖨️ Imprimir horario
               </Link>
             )}
             {tieneHorario && <AsignarDiaPago terceroId={tercero.id} diaPagoInicial={tercero.dia_pago} />}
@@ -183,7 +183,7 @@ export default async function TerceroDetallePage({
                     </thead>
                     <tbody>
                       {lista.map((m) => (
-                        <tr key={m.id}>
+                        <tr key={m.id} className={m.estado === "anulado" ? "opacity-40" : ""}>
                           <td>{fmtDate(m.fecha)}</td>
                           <td>{m.tipo_movimiento?.nombre || (m.origen === "nomina" ? "Nómina" : "—")}</td>
                           <td className="text-[12px] text-muted">{m.concepto || "—"}</td>

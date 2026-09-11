@@ -124,6 +124,35 @@ export function saldoCuenta(movimientos: MovParaSaldo[]): number {
   return conSaldo.length ? conSaldo[conSaldo.length - 1].saldoAcumulado : 0;
 }
 
+/* ============================================================
+   N° DE EGRESO POR CUENTA (portado del prototipo de referencia:
+   cada cuenta lleva su propia numeración de egresos/cheques)
+   ============================================================ */
+
+type MovParaNumero = { id: string; cuenta_id: string | null; creado_en: string };
+
+// Asigna a cada egreso su posición (1, 2, 3…) dentro de los egresos de SU
+// cuenta, ordenados por creado_en. Se calcula siempre por orden de creación
+// (no de fecha) para que sea estable: un egreso ya impreso con su N° nunca
+// cambia de número aunque después se registre otro con fecha anterior.
+export function numerosEgresoPorCuenta<T extends MovParaNumero>(egresos: T[]): Map<string, number> {
+  const porCuenta = new Map<string, T[]>();
+  for (const m of egresos) {
+    if (!m.cuenta_id) continue;
+    const lista = porCuenta.get(m.cuenta_id) ?? [];
+    lista.push(m);
+    porCuenta.set(m.cuenta_id, lista);
+  }
+  const numeros = new Map<string, number>();
+  for (const lista of porCuenta.values()) {
+    lista
+      .slice()
+      .sort((a, b) => (a.creado_en || '').localeCompare(b.creado_en || ''))
+      .forEach((m, i) => numeros.set(m.id, i + 1));
+  }
+  return numeros;
+}
+
 export function totalPorTipoEstado(
   movimientos: MovParaSaldo[],
   tipo: MovimientoFinanciero['tipo'],

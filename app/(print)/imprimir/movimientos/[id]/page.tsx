@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { money, fmtDate, numeroALetras, todayISO } from "@/lib/calculos";
+import { money, fmtDate, numeroALetras, todayISO, calcularHorasSemana, numerosEgresoPorCuenta } from "@/lib/calculos";
 import { nombreCompleto } from "@/lib/terceros";
 import { obtenerPerfilActual } from "@/lib/auth/perfil";
 import PrintStyles from "@/components/print/print-styles";
@@ -8,24 +10,62 @@ import PrintActions from "@/components/print/print-actions";
 import PrintLogo from "@/components/print/print-logo";
 import type { Cuenta, TipoMovimiento, Tercero } from "@/lib/types";
 
-export default async function ImprimirMovimientoPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+const datosMovimiento = cache(async (id: string) => {
   const supabase = await createClient();
-  const perfil = await obtenerPerfilActual();
-
   const { data: movimiento } = await supabase
     .from("movimientos_financieros")
     .select("*, cuenta:cuentas(*), tercero:terceros(*), tipo_movimiento:tipos_movimiento(*)")
     .eq("id", id)
     .single();
-
-  if (!movimiento) notFound();
+  if (!movimiento) return null;
 
   const m = movimiento as typeof movimiento & {
     cuenta: Cuenta | null;
     tercero: Tercero | null;
     tipo_movimiento: TipoMovimiento | null;
   };
+
+  let numero: number | null = null;
+  if (m.tipo === "egreso" && m.cuenta_id) {
+    const { data: egresosCuenta } = await supabase
+      .from("movimientos_financieros")
+      .select("id,cuenta_id,creado_en")
+      .eq("cuenta_id", m.cuenta_id)
+      .eq("tipo", "egreso");
+    numero = numerosEgresoPorCuenta(egresosCuenta ?? []).get(m.id) ?? null;
+  }
+
+  // Horas trabajadas detrás de este egreso, cuando viene de una (o varias,
+  // cargadas juntas) semana de bitácora — para mostrarlas en la papeleta.
+  let horas: number | null = null;
+  if (m.origen === "nomina" && m.tercero) {
+    const { data: semanas } = await supabase.from("semanas").select("dias").eq("movimiento_id", m.id);
+    if (semanas && semanas.length) {
+      horas = semanas.reduce((total, s) => total + calcularHorasSemana(s.dias, m.tercero!.precio_hora || 0).horas, 0);
+    }
+  }
+
+  return { m, numero, horas };
+});
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const datos = await datosMovimiento(id);
+  if (!datos) return {};
+  const { m, numero } = datos;
+  if (m.tipo === "egreso" && numero != null) {
+    return { title: `Egreso ${numero} - ${m.cuenta?.empresa || ""}` };
+  }
+  return {};
+}
+
+export default async function ImprimirMovimientoPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const perfil = await obtenerPerfilActual();
+
+  const datos = await datosMovimiento(id);
+  if (!datos) notFound();
+  const { m, numero, horas } = datos;
 
   const esEgreso = m.tipo === "egreso";
   const letras = numeroALetras(Number(m.monto));
@@ -51,8 +91,14 @@ export default async function ImprimirMovimientoPage({ params }: { params: Promi
             )}
           </div>
           <div className="doc">
-            <div className="t">{esEgreso ? "EGRESO" : "COMPROBANTE DE INGRESO"}</div>
-            <div className="n">{m.tipo_movimiento?.nombre || (esEgreso ? "Egreso" : "Ingreso")}</div>
+            <div className="t">
+              {esEgreso
+                ? `EGRESO${m.tipo_movimiento?.nombre ? " DE " + m.tipo_movimiento.nombre.toUpperCase() : ""}`
+                : "COMPROBANTE DE INGRESO"}
+            </div>
+            <div className="n">
+              {esEgreso && numero != null ? `N° ${numero}` : m.tipo_movimiento?.nombre || (esEgreso ? "Egreso" : "Ingreso")}
+            </div>
           </div>
         </div>
 
@@ -113,6 +159,16 @@ export default async function ImprimirMovimientoPage({ params }: { params: Promi
                   <span className="lbl">Concepto</span>
                   <span className="v" style={{ fontWeight: 500 }}>
                     {m.concepto}
+                  </span>
+                </td>
+              </tr>
+            )}
+            {horas != null && (
+              <tr>
+                <td colSpan={2}>
+                  <span className="lbl">Horas trabajadas y pagadas</span>
+                  <span className="v" style={{ fontWeight: 600 }}>
+                    {horas.toFixed(2)} horas
                   </span>
                 </td>
               </tr>

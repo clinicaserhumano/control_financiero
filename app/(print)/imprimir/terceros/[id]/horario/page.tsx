@@ -1,14 +1,12 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { fmtDate, todayISO, horaDecimal, calcularHorasSemana } from "@/lib/calculos";
-import { TERCERO_TIPO_LABEL, nombreCompleto, formatearHorario } from "@/lib/terceros";
+import { TERCERO_TIPO_LABEL, ORDEN_DIAS, nombreCompleto, formatearHorario } from "@/lib/terceros";
 import { obtenerPerfilActual } from "@/lib/auth/perfil";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
 import PrintLogo from "@/components/print/print-logo";
 import type { Tercero } from "@/lib/types";
-
-const DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"] as const;
 
 export default async function ImprimirHorarioPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -57,7 +55,10 @@ export default async function ImprimirHorarioPage({ params }: { params: Promise<
               </tr>
             </thead>
             <tbody>
-              {DIAS_SEMANA.map((dia) => {
+              {ORDEN_DIAS.filter((dia) => {
+                const h = horarioPorDia.get(dia);
+                return h?.entrada && h?.salida;
+              }).map((dia) => {
                 const h = horarioPorDia.get(dia);
                 return (
                   <tr key={dia}>

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { money, fmtDate, todayISO, totalPorTipoEstado } from "@/lib/calculos";
+import { money, fmtDate, todayISO, calcularHorasSemana, numerosEgresoPorCuenta } from "@/lib/calculos";
 import { TERCERO_TIPO_LABEL, nombreCompleto } from "@/lib/terceros";
 import { obtenerPerfilActual } from "@/lib/auth/perfil";
 import PrintStyles from "@/components/print/print-styles";
@@ -10,39 +10,99 @@ import type { MovimientoFinanciero } from "@/lib/types";
 
 type MovConNombres = MovimientoFinanciero & { tipo_movimiento: { nombre: string } | null };
 
-export default async function ImprimirTerceroPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ desde?: string; hasta?: string }>;
-}) {
+// Cada movimiento confirmado se muestra en DOS filas — el cargo (cuando se
+// prestó el servicio / se generó la deuda) y el abono (cuando se pagó, con
+// el número de cheque u otra referencia) — para que el saldo corrido baje a
+// $0.00 justo después de pagarse, igual que un estado de cuenta real. Un
+// movimiento todavía pendiente solo aporta su fila de cargo, y ese saldo
+// que no vuelve a bajar es exactamente el saldo por pagar.
+type Fila = { fecha: string; concepto: string; valor: number | null; abono: number | null; saldo: number; obs: string };
+
+export default async function ImprimirTerceroPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { desde, hasta } = await searchParams;
   const supabase = await createClient();
   const perfil = await obtenerPerfilActual();
 
-  const [{ data: tercero }, { data: movimientos }] = await Promise.all([
-    supabase.from("terceros").select("*").eq("id", id).single(),
+  const { data: tercero } = await supabase.from("terceros").select("*").eq("id", id).single();
+  if (!tercero) notFound();
+
+  const [{ data: cuentaPaga }, { data: movimientos }, { data: semanas }] = await Promise.all([
+    tercero.cuenta_id
+      ? supabase.from("cuentas").select("empresa").eq("id", tercero.cuenta_id).single()
+      : Promise.resolve({ data: null }),
     supabase
       .from("movimientos_financieros")
       .select("*, tipo_movimiento:tipos_movimiento(nombre)")
       .eq("tercero_id", id)
-      .order("fecha", { ascending: true }),
+      .neq("estado", "anulado")
+      .order("fecha", { ascending: true })
+      .order("creado_en", { ascending: true }),
+    supabase.from("semanas").select("dias,movimiento_id").eq("tercero_id", id).not("movimiento_id", "is", null),
   ]);
-  if (!tercero) notFound();
 
-  // Los anulados no se imprimen: un reporte impreso es para ver lo real
-  // (confirmado y pendiente), no el historial de correcciones.
-  const lista = ((movimientos ?? []) as unknown as MovConNombres[]).filter((m) => m.estado !== "anulado");
-  const filas = lista.filter((m) => (!desde || m.fecha >= desde) && (!hasta || m.fecha <= hasta));
-  const pendiente = totalPorTipoEstado(lista, "egreso", "pendiente");
-  const confirmado = totalPorTipoEstado(filas, "egreso", "confirmado");
+  const lista = (movimientos ?? []) as unknown as MovConNombres[];
 
-  let periodo = "Todas las fechas";
-  if (desde && hasta) periodo = `${fmtDate(desde)} al ${fmtDate(hasta)}`;
-  else if (desde) periodo = `Desde ${fmtDate(desde)}`;
-  else if (hasta) periodo = `Hasta ${fmtDate(hasta)}`;
+  // N° de egreso por cuenta — depende de TODOS los egresos de cada cuenta,
+  // no solo de los de esta persona, por eso se trae aparte (liviano).
+  const { data: egresosCuentas } = await supabase.from("movimientos_financieros").select("id,cuenta_id,creado_en").eq("tipo", "egreso");
+  const numerosEgreso = numerosEgresoPorCuenta(
+    (egresosCuentas ?? []) as { id: string; cuenta_id: string | null; creado_en: string }[]
+  );
+
+  // Horas trabajadas (y cuántas semanas de bitácora) detrás de cada cargo de
+  // nómina — una carga conjunta liga varias semanas al mismo movimiento.
+  const horasPorMovimiento = new Map<string, { horas: number; semanas: number }>();
+  for (const s of semanas ?? []) {
+    if (!s.movimiento_id) continue;
+    const { horas } = calcularHorasSemana(s.dias, tercero.precio_hora || 0);
+    const previo = horasPorMovimiento.get(s.movimiento_id) || { horas: 0, semanas: 0 };
+    horasPorMovimiento.set(s.movimiento_id, { horas: previo.horas + horas, semanas: previo.semanas + 1 });
+  }
+
+  let saldo = 0;
+  const filas: Fila[] = [];
+  for (const m of lista) {
+    const horasInfo = horasPorMovimiento.get(m.id);
+    // Cargos importados de antes de usar la bitácora no tienen semanas
+    // ligadas para sacar las horas reales — se estiman a partir del monto
+    // pagado y el precio/hora, en vez de dejar la observación en blanco.
+    const horasAprox = tercero.precio_hora ? Number(m.monto) / tercero.precio_hora : null;
+    const obsCargo = horasInfo
+      ? `${horasInfo.horas.toFixed(2)} h${horasInfo.semanas > 1 ? ` · ${horasInfo.semanas} sem.` : ""}`
+      : m.observaciones
+        ? m.observaciones
+        : horasAprox
+          ? `${horasAprox.toFixed(2)} h`
+          : "—";
+    saldo += Number(m.monto);
+    filas.push({ fecha: m.fecha, concepto: m.concepto || "—", valor: Number(m.monto), abono: null, saldo, obs: obsCargo });
+
+    if (m.estado === "confirmado") {
+      const referencia = (m.referencia || {}) as Record<string, string>;
+      const valores = Object.values(referencia).filter(Boolean);
+      let obsPago = referencia.cheque
+        ? `Cheque ${referencia.cheque}`
+        : valores.length
+          ? valores.join(" · ")
+          : m.tipo_movimiento?.nombre || "Pagado";
+      const numeroEgreso = numerosEgreso.get(m.id);
+      if (numeroEgreso != null) obsPago += ` · Egreso N° ${numeroEgreso}`;
+      if (m.descuento) obsPago += ` · Desc. ${money(m.descuento)}`;
+      saldo -= Number(m.monto);
+      filas.push({
+        fecha: m.fecha_pago || m.fecha,
+        concepto: m.concepto || "—",
+        valor: null,
+        abono: Number(m.monto),
+        saldo,
+        obs: obsPago,
+      });
+    }
+  }
+
+  const totalValor = filas.reduce((s, f) => s + (f.valor || 0), 0);
+  const totalAbono = filas.reduce((s, f) => s + (f.abono || 0), 0);
+  const saldoFinal = filas.length ? filas[filas.length - 1].saldo : 0;
 
   return (
     <>
@@ -52,53 +112,64 @@ export default async function ImprimirTerceroPage({
         <PrintLogo />
         <div className="hd">
           <div>
-            <div className="ttl">Reporte de Movimientos</div>
+            <div className="ttl">Estado de Cuenta</div>
             <div className="org">
-              {nombreCompleto(tercero)} · {TERCERO_TIPO_LABEL[tercero.tipo]}
+              {nombreCompleto(tercero)}
+              {tercero.cedula_ruc ? ` · ${tercero.cedula_ruc}` : ""}
             </div>
-            {tercero.cedula_ruc && <div className="meta">CED/RUC: {tercero.cedula_ruc}</div>}
-            <div className="badge">
-              Período: {periodo} · {filas.length} movimiento(s)
+            <div className="meta">
+              {[tercero.tarea, TERCERO_TIPO_LABEL[tercero.tipo], cuentaPaga ? `Paga: ${cuentaPaga.empresa}` : null]
+                .filter(Boolean)
+                .join(" · ")}
             </div>
           </div>
         </div>
-        <div className="sum">
-          <div>
-            Pagado en el período
-            <b>{money(confirmado)}</b>
-          </div>
-          <div>
-            Saldo x pagar (total)
-            <b>{money(pendiente)}</b>
-          </div>
-        </div>
+
         <table className="reporte">
           <thead>
             <tr>
               <th>Fecha</th>
-              <th>Tipo</th>
               <th>Concepto</th>
-              <th>Estado</th>
               <th style={{ textAlign: "right" }}>Valor</th>
+              <th style={{ textAlign: "right" }}>Abono</th>
+              <th style={{ textAlign: "right" }}>Saldo</th>
+              <th>Observación</th>
             </tr>
           </thead>
           <tbody>
-            {filas.map((m) => (
-              <tr key={m.id}>
-                <td>{fmtDate(m.fecha)}</td>
-                <td>{m.tipo_movimiento?.nombre || (m.origen === "nomina" ? "Nómina" : "—")}</td>
-                <td>{m.concepto || "—"}</td>
-                <td>{m.estado === "confirmado" ? "Confirmado" : "Pendiente"}</td>
-                <td className="rt">{money(m.monto)}</td>
+            {filas.length === 0 ? (
+              <tr>
+                <td colSpan={6}>Sin movimientos registrados.</td>
               </tr>
-            ))}
+            ) : (
+              filas.map((f, i) => (
+                <tr key={i}>
+                  <td>{fmtDate(f.fecha)}</td>
+                  <td>{f.concepto}</td>
+                  <td className="rt">{f.valor != null ? money(f.valor) : ""}</td>
+                  <td className="rt">{f.abono != null ? money(f.abono) : ""}</td>
+                  <td className="rt">{money(f.saldo)}</td>
+                  <td>{f.obs}</td>
+                </tr>
+              ))
+            )}
+            <tr className="total">
+              <td colSpan={2} style={{ textAlign: "right" }}>
+                TOTALES
+              </td>
+              <td className="rt">{money(totalValor)}</td>
+              <td className="rt">{money(totalAbono)}</td>
+              <td className="rt">{money(saldoFinal)}</td>
+              <td></td>
+            </tr>
           </tbody>
         </table>
+
         <div className="foot">
           <span>
             Generado el {fmtDate(todayISO())} por {perfil?.alias || perfil?.email || "—"}
           </span>
-          <span>Control Financiero · Ser Humano</span>
+          <span>Saldo x pagar: {money(saldoFinal)}</span>
         </div>
       </div>
     </>

@@ -15,7 +15,7 @@ export default function PrintActions({ volverHref }: { volverHref: string }) {
         ← Volver
       </Link>
       <button type="button" onClick={() => window.print()} className="btn-navy btn-sm">
-        ↦ Imprimir
+        🖨️ Imprimir
       </button>
     </div>
   );

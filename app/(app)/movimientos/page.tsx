@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { money, fmtDate, todayISO, addDaysISO } from "@/lib/calculos";
+import { money, fmtDate, todayISO, addDaysISO, numerosEgresoPorCuenta } from "@/lib/calculos";
 import { nombreCompleto } from "@/lib/terceros";
 import type { Cuenta, Tercero, TipoMovimiento, MovimientoFinanciero } from "@/lib/types";
 import FormularioMovimiento from "@/components/formulario-movimiento";
 import AnularButton from "./anular-button";
+import MovimientosFiltros from "./movimientos-filtros";
 
 const PAGINAS_OPCIONES = ["5", "10", "50", "todos"];
 
@@ -22,6 +23,7 @@ type SP = {
   cuenta?: string;
   tercero?: string;
   tipoMov?: string;
+  estado?: string;
   q?: string;
   porPagina?: string;
   pagina?: string;
@@ -45,6 +47,7 @@ function construirHrefImprimir(sp: SP, tipo: string, desde?: string, hasta?: str
   if (sp.cuenta) params.set("cuenta", sp.cuenta);
   if (sp.tercero) params.set("tercero", sp.tercero);
   if (sp.tipoMov) params.set("tipoMov", sp.tipoMov);
+  if (sp.estado) params.set("estado", sp.estado);
   if (sp.q) params.set("q", sp.q);
   return `/imprimir/movimientos?${params.toString()}`;
 }
@@ -88,13 +91,46 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
   if (sp.cuenta) query = query.eq("cuenta_id", sp.cuenta);
   if (sp.tercero && tipo === "egreso") query = query.eq("tercero_id", sp.tercero);
   if (sp.tipoMov) query = query.eq("tipo_movimiento_id", sp.tipoMov);
+  if (sp.estado === "confirmado" || sp.estado === "pendiente" || sp.estado === "anulado") {
+    query = query.eq("estado", sp.estado);
+  }
   if (desdeEfectivo) query = query.gte("fecha", desdeEfectivo);
   if (hastaEfectivo) query = query.lte("fecha", hastaEfectivo);
-  if (sp.q) query = tipo === "ingreso" ? query.or(`concepto.ilike.%${sp.q}%,pagador.ilike.%${sp.q}%`) : query.ilike("concepto", `%${sp.q}%`);
+  if (sp.q) {
+    if (tipo === "ingreso") {
+      query = query.or(`concepto.ilike.%${sp.q}%,pagador.ilike.%${sp.q}%`);
+    } else {
+      // El concepto de un egreso de nómina no lleva el nombre de la persona
+      // (va por tercero_id, no como texto) — sin esto, buscar "Jorge" nunca
+      // encontraba sus movimientos aunque el filtro "Personal" sí los tenga.
+      const { data: terceros_q } = await supabase
+        .from("terceros")
+        .select("id")
+        .or(`nombre.ilike.%${sp.q}%,apellido.ilike.%${sp.q}%`);
+      const idsTercerosQ = (terceros_q ?? []).map((t) => t.id);
+      const condiciones = [`concepto.ilike.%${sp.q}%`, `beneficiario.ilike.%${sp.q}%`];
+      if (idsTercerosQ.length) condiciones.push(`tercero_id.in.(${idsTercerosQ.join(",")})`);
+      query = query.or(condiciones.join(","));
+    }
+  }
   query = query.order("fecha", { ascending: false }).order("creado_en", { ascending: false });
 
   const { data: movimientos } = await query;
   const lista = (movimientos ?? []) as unknown as MovConRelaciones[];
+
+  // La numeración de egresos es por cuenta y depende de TODOS los egresos de
+  // esa cuenta, no solo de los que quedaron en este listado filtrado/paginado
+  // — por eso se trae aparte, liviano (solo id/cuenta/fecha de creación).
+  const numerosEgreso =
+    tipo === "egreso"
+      ? numerosEgresoPorCuenta(
+          ((await supabase.from("movimientos_financieros").select("id,cuenta_id,creado_en").eq("tipo", "egreso")).data ?? []) as {
+            id: string;
+            cuenta_id: string | null;
+            creado_en: string;
+          }[]
+        )
+      : new Map<string, number>();
 
   // Confirmado y pendiente se muestran por separado: un egreso pendiente
   // todavía no salió de ninguna cuenta, mezclarlo en un solo total daría a
@@ -166,83 +202,33 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                 </div>
               )}
 
-              <form method="get" className="flex gap-3 flex-wrap items-end px-4 pt-3.5">
-                <input type="hidden" name="tipo" value={tipo} />
-                <div className="field mb-0">
-                  <label className="flabel">Desde</label>
-                  <input type="date" name="desde" defaultValue={desdeEfectivo || ""} className="finput" />
-                </div>
-                <div className="field mb-0">
-                  <label className="flabel">Hasta</label>
-                  <input type="date" name="hasta" defaultValue={hastaEfectivo || ""} className="finput" />
-                </div>
-                <div className="field mb-0">
-                  <label className="flabel">Cuenta</label>
-                  <select name="cuenta" defaultValue={sp.cuenta || ""} className="finput">
-                    <option value="">Todas</option>
-                    {(cuentas ?? []).map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.empresa}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {tipo === "egreso" && (
-                  <div className="field mb-0">
-                    <label className="flabel">Personal</label>
-                    <select name="tercero" defaultValue={sp.tercero || ""} className="finput">
-                      <option value="">Todos</option>
-                      {(terceros ?? []).map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {nombreCompleto(t)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                <div className="field mb-0">
-                  <label className="flabel">Tipo</label>
-                  <select name="tipoMov" defaultValue={sp.tipoMov || ""} className="finput">
-                    <option value="">Todos</option>
-                    {(tiposMovimiento ?? []).map((tm) => (
-                      <option key={tm.id} value={tm.id}>
-                        {tm.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="field mb-0">
-                  <label className="flabel">{tipo === "ingreso" ? "Buscar pagador / concepto" : "Buscar concepto"}</label>
-                  <input type="text" name="q" defaultValue={sp.q || ""} className="finput" />
-                </div>
-                <div className="field mb-0" style={{ maxWidth: 110 }}>
-                  <label className="flabel">Por página</label>
-                  <select name="porPagina" defaultValue={porPaginaSel} className="finput">
-                    <option value="5">5</option>
-                    <option value="10">10</option>
-                    <option value="50">50</option>
-                    <option value="todos">Todos</option>
-                  </select>
-                </div>
-                <button type="submit" className="btn-ghost btn-sm">
-                  Filtrar
-                </button>
+              <MovimientosFiltros
+                tipo={tipo}
+                cuentas={(cuentas ?? []).map((c) => ({ id: c.id, empresa: c.empresa }))}
+                terceros={(terceros ?? []).map((t) => ({ id: t.id, nombre: t.nombre, apellido: t.apellido }))}
+                tiposMovimiento={(tiposMovimiento ?? []).map((tm) => ({ id: tm.id, nombre: tm.nombre }))}
+                valores={{ desde: desdeEfectivo, hasta: hastaEfectivo, todo: sp.todo, cuenta: sp.cuenta, tercero: sp.tercero, tipoMov: sp.tipoMov, estado: sp.estado, q: sp.q }}
+                porPaginaSel={porPaginaSel}
+              />
+              <div className="flex items-center gap-2 flex-wrap px-4 pt-2.5">
                 <Link href={`/movimientos?tipo=${tipo}&todo=1`} className="btn-ghost btn-sm">
                   Ver todo el historial
                 </Link>
                 <Link href={construirHrefImprimir(sp, tipo, desdeEfectivo, hastaEfectivo)} className="btn-navy btn-sm ml-auto">
-                  ↦ Imprimir rango (A4)
+                  🖨️ Imprimir rango (A4)
                 </Link>
-              </form>
+              </div>
 
               <div className="overflow-x-auto mt-3.5">
                 <table className="table-base">
                   <thead>
                     <tr>
+                      {tipo === "egreso" && <th>N°</th>}
                       <th>Fecha</th>
                       <th>Tipo</th>
                       <th>{tipo === "ingreso" ? "Pagador" : "Beneficiario"}</th>
                       <th>Cuenta</th>
+                      {tipo === "egreso" && <th>Cheque / Ref.</th>}
                       <th>Estado</th>
                       <th className="td-num">Valor</th>
                       <th></th>
@@ -251,7 +237,7 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                   <tbody>
                     {pagina.length === 0 ? (
                       <tr>
-                        <td colSpan={7}>
+                        <td colSpan={tipo === "egreso" ? 9 : 7}>
                           <div className="empty-state">
                             <div className="empty-title">
                               Sin {tipo === "ingreso" ? "ingresos" : "egresos"}
@@ -262,7 +248,10 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                       </tr>
                     ) : (
                       pagina.map((m) => (
-                        <tr key={m.id}>
+                        <tr key={m.id} className={m.estado === "anulado" ? "opacity-40" : ""}>
+                          {tipo === "egreso" && (
+                            <td className="text-[12px] text-muted">{numerosEgreso.get(m.id) ?? "—"}</td>
+                          )}
                           <td>{fmtDate(m.fecha)}</td>
                           <td>{m.tipo_movimiento?.nombre || "—"}</td>
                           <td>
@@ -293,6 +282,11 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                             )}
                           </td>
                           <td className="text-[12px] text-muted">{m.cuenta ? `${m.cuenta.banco} · ${m.cuenta.numero}` : "—"}</td>
+                          {tipo === "egreso" && (
+                            <td className="text-[12px] text-muted">
+                              {Object.values(m.referencia || {}).filter(Boolean).join(" · ") || "—"}
+                            </td>
+                          )}
                           <td>
                             <span
                               className={
@@ -315,10 +309,14 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                           </td>
                           <td>
                             <div className="flex gap-1.5 justify-end">
-                              <Link href={`/imprimir/movimientos/${m.id}`} className="btn-navy btn-sm">
-                                Imprimir
-                              </Link>
-                              {m.estado !== "anulado" && <AnularButton id={m.id} />}
+                              {m.estado !== "anulado" && (
+                                <>
+                                  <Link href={`/imprimir/movimientos/${m.id}`} className="btn-navy btn-sm">
+                                    🖨️ Imprimir
+                                  </Link>
+                                  <AnularButton id={m.id} />
+                                </>
+                              )}
                             </div>
                           </td>
                         </tr>

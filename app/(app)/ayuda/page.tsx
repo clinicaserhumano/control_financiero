@@ -258,9 +258,10 @@ export default function AyudaPage() {
 
         <Seccion id="horario" titulo="Horario de Personal">
           <p>
-            Para Servicios prestados y Personal afiliado puedes guardar su horario habitual (de Lunes a Sábado, hora
-            de entrada y salida). Se edita desde el mismo formulario de Editar datos — puedes dejarlo en blanco y
-            completarlo después, día por día.
+            Para Servicios prestados y Personal afiliado puedes guardar su horario habitual (de Lunes a Domingo).
+            Se edita desde el mismo formulario de Editar datos: marca con un visto los días que se trabajan y llena
+            su hora de entrada y salida — los días sin marcar quedan sin horario. Puedes dejarlo en blanco y
+            completarlo después, o cambiarlo cuando cambie el horario de esa persona.
           </p>
           <p>
             El horario aparece arriba en la ficha de la persona. Y desde ahí mismo, el botón Imprimir horario genera
@@ -272,8 +273,10 @@ export default function AyudaPage() {
         <Seccion id="bitacora" titulo="Bitácora semanal">
           <p>
             Solo para Servicios prestados (personal que se paga por hora). Dentro de su ficha, en la pestaña
-            Bitácora semanal, dale a Agregar semana para crear una semana nueva, y llena cada día (Lunes a Sábado)
-            con la hora de entrada, salida, y minutos de almuerzo si aplica.
+            Bitácora semanal, dale a Agregar semana para crear una semana nueva, y llena cada día con la hora de
+            entrada, salida, y minutos de almuerzo si aplica. Los días que trae la semana nueva son los que esa
+            persona tiene marcados en su horario habitual (si no tiene horario configurado, trae Lunes a Sábado por
+            defecto).
           </p>
           <p>
             El sistema calcula solo las horas trabajadas de cada día (necesita que tenga AMBAS horas, entrada y

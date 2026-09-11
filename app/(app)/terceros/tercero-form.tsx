@@ -8,7 +8,7 @@ import { useEsAdmin } from "@/lib/auth/role-context";
 import { BotonAdmin } from "@/lib/auth/boton-admin";
 import type { Cuenta, HorarioDia, Tercero } from "@/lib/types";
 
-const DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"] as const;
+const DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] as const;
 
 export default function TerceroForm({
   grupoActivo,
@@ -29,7 +29,15 @@ export default function TerceroForm({
   const [horario, setHorario] = useState<HorarioDia[]>(() =>
     DIAS_SEMANA.map((dia) => terceroEditando?.horario?.find((h) => h.dia === dia) ?? { dia, entrada: "", salida: "" })
   );
+  const [diasMarcados, setDiasMarcados] = useState<boolean[]>(() => horario.map((h) => !!(h.entrada || h.salida)));
   const esAdmin = useEsAdmin();
+
+  function marcarDia(i: number, marcado: boolean) {
+    setDiasMarcados((prev) => prev.map((m, j) => (j === i ? marcado : m)));
+    if (!marcado) {
+      setHorario((prev) => prev.map((h, j) => (j === i ? { ...h, entrada: "", salida: "" } : h)));
+    }
+  }
 
   function recalcularPrecio(nuevoSueldo: string, nuevasHoras: string) {
     const s = parseFloat(nuevoSueldo);
@@ -185,19 +193,27 @@ export default function TerceroForm({
               <input type="hidden" name="horario" value={JSON.stringify(horario)} />
               <div className="flex flex-col gap-1.5">
                 {horario.map((h, i) => (
-                  <div key={h.dia} className="grid grid-cols-[90px_1fr_1fr] gap-2 items-center">
-                    <span className="text-[12.5px] font-semibold">{h.dia}</span>
+                  <div key={h.dia} className="grid grid-cols-[20px_84px_1fr_1fr] gap-2 items-center">
+                    <input
+                      type="checkbox"
+                      checked={diasMarcados[i]}
+                      onChange={(e) => marcarDia(i, e.target.checked)}
+                      title={`Se trabaja el ${h.dia}`}
+                    />
+                    <span className={"text-[12.5px] font-semibold " + (diasMarcados[i] ? "" : "text-muted")}>{h.dia}</span>
                     <input
                       type="time"
+                      disabled={!diasMarcados[i]}
                       value={h.entrada}
                       onChange={(e) => setHorario((prev) => prev.map((x, j) => (j === i ? { ...x, entrada: e.target.value } : x)))}
-                      className="finput"
+                      className="finput disabled:opacity-40"
                     />
                     <input
                       type="time"
+                      disabled={!diasMarcados[i]}
                       value={h.salida}
                       onChange={(e) => setHorario((prev) => prev.map((x, j) => (j === i ? { ...x, salida: e.target.value } : x)))}
-                      className="finput"
+                      className="finput disabled:opacity-40"
                     />
                   </div>
                 ))}
@@ -208,13 +224,15 @@ export default function TerceroForm({
                 onClick={() => {
                   const lunes = horario[0];
                   setHorario((prev) => prev.map((h, i) => (i === 0 ? h : { ...h, entrada: lunes.entrada, salida: lunes.salida })));
+                  setDiasMarcados(horario.map(() => true));
                 }}
                 className="btn-ghost btn-sm self-start mt-1 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Repetir horario del Lunes en todos los días
               </button>
               <div className="fhint">
-                Puedes dejarlo en blanco y completar después, o ajustar un día específico luego de repetir el horario.
+                Marca los días que se trabajan (de Lunes a Domingo) y llena su hora de entrada y salida. Los días sin
+                marcar quedan sin horario.
               </div>
             </div>
           )}

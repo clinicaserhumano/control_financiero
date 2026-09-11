@@ -4,19 +4,28 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { calcularHorasSemana, todayISO } from "@/lib/calculos";
-import type { DiaSemana } from "@/lib/types";
+import { ORDEN_DIAS } from "@/lib/terceros";
+import type { DiaSemana, HorarioDia } from "@/lib/types";
 
-const DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"] as const;
+// Si la persona no tiene un horario habitual configurado (ver "Asignar
+// horario" en su ficha), se usa este default histórico de Lunes a Sábado —
+// así no cambia el comportamiento para nadie que no haya configurado nada.
+const DIAS_SEMANA_DEFECTO = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"] as const;
 
-function semanaVacia(): DiaSemana[] {
-  return DIAS_SEMANA.map((dia) => ({ dia, fecha: "", entrada: "", salida: "", almuerzo: "", nota: "" }));
+function semanaVacia(horario: HorarioDia[] | null | undefined): DiaSemana[] {
+  const diasTrabajados = ORDEN_DIAS.filter((dia) => horario?.some((h) => h.dia === dia && h.entrada && h.salida));
+  const dias = diasTrabajados.length > 0 ? diasTrabajados : DIAS_SEMANA_DEFECTO;
+  return dias.map((dia) => ({ dia, fecha: "", entrada: "", salida: "", almuerzo: "", nota: "" }));
 }
 
 export async function agregarSemana(terceroId: string) {
   const chk = await requireAdmin();
   if (!chk.ok) return;
   const supabase = await createClient();
-  await supabase.from("semanas").insert({ tercero_id: terceroId, etiqueta: "", dias: semanaVacia() });
+  const { data: tercero } = await supabase.from("terceros").select("horario").eq("id", terceroId).single();
+  await supabase
+    .from("semanas")
+    .insert({ tercero_id: terceroId, etiqueta: "", dias: semanaVacia(tercero?.horario as HorarioDia[] | null) });
   revalidatePath(`/terceros/${terceroId}`);
 }
 

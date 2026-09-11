@@ -74,7 +74,7 @@ export default async function CuentasPorPagarPage({
               href={`/imprimir/cuentas-por-pagar${desde || hasta ? `?desde=${desde || ""}&hasta=${hasta || ""}` : ""}`}
               className="btn-navy btn-sm ml-auto"
             >
-              ↦ Imprimir
+              🖨️ Imprimir
             </Link>
           </form>
 

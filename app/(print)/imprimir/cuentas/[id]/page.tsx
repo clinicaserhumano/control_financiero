@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { movimientosConSaldo, money, fmtDate, todayISO } from "@/lib/calculos";
+import { movimientosConSaldo, money, fmtDate, todayISO, numerosEgresoPorCuenta } from "@/lib/calculos";
 import { obtenerPerfilActual } from "@/lib/auth/perfil";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
@@ -39,6 +39,7 @@ export default async function ImprimirCuentaPage({
   const filas = conSaldo.filter((m) => (!desde || m.fecha >= desde) && (!hasta || m.fecha <= hasta));
   const ingP = filas.reduce((s, m) => s + (m.tipo === "ingreso" ? Number(m.monto) : 0), 0);
   const egP = filas.reduce((s, m) => s + (m.tipo === "egreso" ? Number(m.monto) : 0), 0);
+  const numerosEgreso = numerosEgresoPorCuenta(lista.filter((m) => m.tipo === "egreso"));
 
   let periodo = "Todas las fechas";
   if (desde && hasta) periodo = `${fmtDate(desde)} al ${fmtDate(hasta)}`;
@@ -82,9 +83,11 @@ export default async function ImprimirCuentaPage({
         <table className="reporte">
           <thead>
             <tr>
+              <th>N°</th>
               <th>Fecha</th>
               <th>Movimiento</th>
               <th>Detalle</th>
+              <th>Cheque / Ref.</th>
               <th style={{ textAlign: "right" }}>Ingreso</th>
               <th style={{ textAlign: "right" }}>Egreso</th>
               <th style={{ textAlign: "right" }}>Saldo</th>
@@ -93,6 +96,7 @@ export default async function ImprimirCuentaPage({
           <tbody>
             {filas.map((m) => (
               <tr key={m.id}>
+                <td>{m.tipo === "egreso" ? numerosEgreso.get(m.id) ?? "—" : ""}</td>
                 <td>{fmtDate(m.fecha)}</td>
                 <td>{m.tipo_movimiento?.nombre || (m.tipo === "ingreso" ? "Ingreso" : "Egreso")}</td>
                 <td>
@@ -100,13 +104,14 @@ export default async function ImprimirCuentaPage({
                     .filter(Boolean)
                     .join(" · ")}
                 </td>
+                <td>{Object.values(m.referencia || {}).filter(Boolean).join(" · ") || "—"}</td>
                 <td className="rt">{m.tipo === "ingreso" ? money(m.monto) : ""}</td>
                 <td className="rt">{m.tipo === "egreso" ? money(m.monto) : ""}</td>
                 <td className="rt">{money(m.saldoAcumulado)}</td>
               </tr>
             ))}
             <tr className="total">
-              <td colSpan={3} style={{ textAlign: "right" }}>
+              <td colSpan={5} style={{ textAlign: "right" }}>
                 TOTALES DEL PERÍODO
               </td>
               <td className="rt">{money(ingP)}</td>

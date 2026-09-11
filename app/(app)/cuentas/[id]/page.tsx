@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { movimientosConSaldo, money, fmtDate, totalPorTipoEstado } from "@/lib/calculos";
+import { movimientosConSaldo, money, fmtDate, totalPorTipoEstado, numerosEgresoPorCuenta } from "@/lib/calculos";
 import type { MovimientoFinanciero } from "@/lib/types";
 
 type MovConNombres = MovimientoFinanciero & {
@@ -39,6 +39,7 @@ export default async function CuentaDetallePage({
   const filasFiltradas = conSaldo.filter(
     (m) => (!desde || m.fecha >= desde) && (!hasta || m.fecha <= hasta)
   );
+  const numerosEgreso = numerosEgresoPorCuenta(lista.filter((m) => m.tipo === "egreso"));
 
   return (
     <div>
@@ -95,7 +96,7 @@ export default async function CuentaDetallePage({
               </Link>
             )}
             <Link href={`/imprimir/cuentas/${id}?desde=${desde || ""}&hasta=${hasta || ""}`} className="btn-navy btn-sm ml-auto">
-              ↦ Imprimir estado de cuenta
+              🖨️ Imprimir estado de cuenta
             </Link>
           </form>
 
@@ -103,9 +104,11 @@ export default async function CuentaDetallePage({
             <table className="table-base">
               <thead>
                 <tr>
+                  <th>N°</th>
                   <th>Fecha</th>
                   <th>Movimiento</th>
                   <th>Detalle</th>
+                  <th>Cheque / Ref.</th>
                   <th className="td-num">Ingreso</th>
                   <th className="td-num">Egreso</th>
                   <th className="td-num">Saldo</th>
@@ -114,7 +117,7 @@ export default async function CuentaDetallePage({
               <tbody>
                 {filasFiltradas.length === 0 ? (
                   <tr>
-                    <td colSpan={6}>
+                    <td colSpan={8}>
                       <div className="empty-state">
                         <div className="empty-title">Sin movimientos</div>
                         {desde || hasta
@@ -126,12 +129,16 @@ export default async function CuentaDetallePage({
                 ) : (
                   filasFiltradas.map((m) => (
                     <tr key={m.id}>
+                      <td className="text-[11px] text-muted">{m.tipo === "egreso" ? numerosEgreso.get(m.id) ?? "—" : ""}</td>
                       <td>{fmtDate(m.fecha)}</td>
                       <td>{m.tipo_movimiento?.nombre || (m.tipo === "ingreso" ? "Ingreso" : "Egreso")}</td>
                       <td className="text-[11px] text-muted">
                         {[m.tercero ? `${m.tercero.nombre} ${m.tercero.apellido || ""}`.trim() : null, m.concepto]
                           .filter(Boolean)
                           .join(" · ")}
+                      </td>
+                      <td className="text-[11px] text-muted">
+                        {Object.values(m.referencia || {}).filter(Boolean).join(" · ") || "—"}
                       </td>
                       <td className="td-num text-primary-dark">{m.tipo === "ingreso" ? money(m.monto) : ""}</td>
                       <td className="td-num">{m.tipo === "egreso" ? money(m.monto) : ""}</td>
