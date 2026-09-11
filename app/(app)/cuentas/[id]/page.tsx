@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { nombreCompleto } from "@/lib/terceros";
+import InfoBoton from "@/components/ayuda/info-boton";
 import { createClient } from "@/lib/supabase/server";
 import { movimientosConSaldo, money, fmtDate, totalPorTipoEstado, numerosEgresoPorCuenta } from "@/lib/calculos";
 import type { MovimientoFinanciero } from "@/lib/types";
@@ -49,7 +51,18 @@ export default async function CuentaDetallePage({
 
       <div className="card mt-3.5">
         <div className="card-h">
-          <h2>{cuenta.empresa}</h2>
+          <h2 className="flex items-center gap-2">
+            {cuenta.empresa}
+            <InfoBoton titulo="Detalle de cuenta" ancla="cuentas">
+              <p className="m-0">
+                La columna <b>N°</b> es el número de egreso real de esa cuenta (el del talonario físico), y{" "}
+                <b>Cheque / Ref.</b> el número de cheque o comprobante de cada movimiento.
+              </p>
+              <p className="m-0">
+                <b>🖨️ Imprimir estado de cuenta</b> genera el mismo detalle en A4, con saldo acumulado día por día.
+              </p>
+            </InfoBoton>
+          </h2>
           <span className="ml-auto text-[11px] text-muted font-semibold">
             {cuenta.banco} · {cuenta.tipo} {cuenta.numero}
           </span>
@@ -133,9 +146,13 @@ export default async function CuentaDetallePage({
                       <td>{fmtDate(m.fecha)}</td>
                       <td>{m.tipo_movimiento?.nombre || (m.tipo === "ingreso" ? "Ingreso" : "Egreso")}</td>
                       <td className="text-[11px] text-muted">
-                        {[m.tercero ? `${m.tercero.nombre} ${m.tercero.apellido || ""}`.trim() : null, m.concepto]
-                          .filter(Boolean)
-                          .join(" · ")}
+                        {m.tercero && m.tercero_id && (
+                          <Link href={`/terceros/${m.tercero_id}`} className="font-semibold text-ink hover:text-primary hover:underline">
+                            {nombreCompleto(m.tercero)}
+                          </Link>
+                        )}
+                        {m.tercero && m.concepto ? " · " : ""}
+                        {m.concepto}
                       </td>
                       <td className="text-[11px] text-muted">
                         {Object.values(m.referencia || {}).filter(Boolean).join(" · ") || "—"}

@@ -126,3 +126,26 @@ export interface MovimientoConRelaciones extends MovimientoFinanciero {
   tercero: Tercero | null;
   tipo_movimiento: TipoMovimiento | null;
 }
+
+export type NotaColor = 'amarillo' | 'rosado' | 'celeste' | 'verde' | 'naranja';
+export type NotaRepetir = 'ninguno' | 'diario' | 'semanal' | 'mensual';
+
+// "fecha" es siempre la PRÓXIMA fecha en que debe avisar. Cuando `repetir`
+// no es 'ninguno', la aplicación la adelanta sola cada vez que se cumple
+// (ver lib/notas.ts), en vez de crear una fila nueva por cada ocurrencia.
+export interface NotaRecordatorio {
+  fecha: string;
+  hora: string | null;
+  repetir: NotaRepetir;
+}
+
+export interface Nota {
+  id: string;
+  titulo: string;
+  contenido: string | null;
+  color: NotaColor;
+  recordatorio: NotaRecordatorio | null;
+  creado_por: string | null;
+  creado_en: string;
+  actualizado_en: string;
+}

@@ -23,13 +23,19 @@ type Props = {
   tiposMovimiento: { id: string; nombre: string }[];
   valores: SP;
   porPaginaSel: string;
+  // Ingresos arranca mostrando "hoy" por defecto (sin que la persona lo haya
+  // pedido). Si eso sigue así y cambian cualquier OTRO filtro (cuenta,
+  // estado, buscador…), hay que soltar esa fecha implícita — si no, esa
+  // búsqueda quedaría escondida "solo por hoy" sin que se note por qué no
+  // aparece nada, igual que le pasaba antes a Egresos con las fechas.
+  fechaImplicita?: boolean;
 };
 
 // Cada cambio (fecha, cuenta, personal, tipo, estado, página) navega al
 // instante con router.replace — sin recarga completa y sin botón "Filtrar".
 // La búsqueda de texto hace lo mismo pero con debounce, para no navegar en
 // cada tecla.
-export default function MovimientosFiltros({ tipo, cuentas, terceros, tiposMovimiento, valores, porPaginaSel }: Props) {
+export default function MovimientosFiltros({ tipo, cuentas, terceros, tiposMovimiento, valores, porPaginaSel, fechaImplicita }: Props) {
   const router = useRouter();
   const [q, setQ] = useState(valores.q || "");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -48,6 +54,12 @@ export default function MovimientosFiltros({ tipo, cuentas, terceros, tiposMovim
     const params = new URLSearchParams();
     params.set("tipo", tipo);
     const combinado: Record<string, string | undefined> = { ...valores, porPagina: porPaginaSel, ...overrides };
+    const tocaFechas = "desde" in overrides || "hasta" in overrides || "todo" in overrides;
+    if (fechaImplicita && !tocaFechas) {
+      combinado.todo = "1";
+      delete combinado.desde;
+      delete combinado.hasta;
+    }
     Object.entries(combinado).forEach(([k, v]) => {
       if (overrides[k] === null) return;
       if (v) params.set(k, v);

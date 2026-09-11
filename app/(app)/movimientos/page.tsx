@@ -6,6 +6,7 @@ import type { Cuenta, Tercero, TipoMovimiento, MovimientoFinanciero } from "@/li
 import FormularioMovimiento from "@/components/formulario-movimiento";
 import AnularButton from "./anular-button";
 import MovimientosFiltros from "./movimientos-filtros";
+import InfoBoton from "@/components/ayuda/info-boton";
 
 const PAGINAS_OPCIONES = ["5", "10", "50", "todos"];
 
@@ -124,10 +125,11 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
   const numerosEgreso =
     tipo === "egreso"
       ? numerosEgresoPorCuenta(
-          ((await supabase.from("movimientos_financieros").select("id,cuenta_id,creado_en").eq("tipo", "egreso")).data ?? []) as {
+          ((await supabase.from("movimientos_financieros").select("id,cuenta_id,creado_en,referencia").eq("tipo", "egreso")).data ?? []) as {
             id: string;
             cuenta_id: string | null;
             creado_en: string;
+            referencia: Record<string, unknown> | null;
           }[]
         )
       : new Map<string, number>();
@@ -146,6 +148,30 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
 
   return (
     <div>
+      <div className="flex items-start gap-2 -mt-1.5 mb-[18px]">
+        <p className="text-[12.5px] text-muted m-0">
+          {tipo === "ingreso"
+            ? "Todo el dinero que entra a la clínica: pagos de pacientes o clientes. Se registran ya cobrados."
+            : "Todo el dinero que sale: pagos a Personal, proveedores, servicios. Pueden pagarse de una vez o quedar pendientes en Cuentas por Pagar."}
+        </p>
+        <InfoBoton titulo={tipo === "ingreso" ? "Ingresos" : "Egresos"} ancla={tipo === "ingreso" ? "ingresos" : "egresos"}>
+          <p className="m-0">
+            Los filtros (Cuenta, {tipo === "egreso" ? "Personal, Forma de pago, " : ""}Estado, y el buscador) se
+            aplican <b>al instante</b>, sin botón — no hace falta darle Enter ni Filtrar.
+          </p>
+          {tipo === "egreso" && (
+            <p className="m-0">
+              La columna <b>N°</b> es el número de egreso real de esa cuenta (el mismo del talonario físico), y{" "}
+              <b>Cheque / Ref.</b> muestra el N° de cheque o comprobante. Un registro <b>Anulado</b> sale atenuado en
+              gris y ya no tiene botón Imprimir.
+            </p>
+          )}
+          <p className="m-0">
+            <b>Imprimir</b> (con el ícono 🖨️) abre el comprobante individual;{" "}
+            <b>Imprimir rango (A4)</b> imprime todo lo que está filtrado en ese momento.
+          </p>
+        </InfoBoton>
+      </div>
       <div className="grid gap-5 lg:grid-cols-[380px_1fr]">
         <FormularioMovimiento
           modo="crear"
@@ -209,6 +235,7 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                 tiposMovimiento={(tiposMovimiento ?? []).map((tm) => ({ id: tm.id, nombre: tm.nombre }))}
                 valores={{ desde: desdeEfectivo, hasta: hastaEfectivo, todo: sp.todo, cuenta: sp.cuenta, tercero: sp.tercero, tipoMov: sp.tipoMov, estado: sp.estado, q: sp.q }}
                 porPaginaSel={porPaginaSel}
+                fechaImplicita={tipo === "ingreso" && !fechasExplicitas}
               />
               <div className="flex items-center gap-2 flex-wrap px-4 pt-2.5">
                 <Link href={`/movimientos?tipo=${tipo}&todo=1`} className="btn-ghost btn-sm">
@@ -255,28 +282,19 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                           <td>{fmtDate(m.fecha)}</td>
                           <td>{m.tipo_movimiento?.nombre || "—"}</td>
                           <td>
-                            <span
-                              className={
-                                tipo === "egreso" && m.tercero
-                                  ? m.tercero.activo
-                                    ? "font-semibold text-primary-dark"
-                                    : "font-semibold text-muted"
-                                  : ""
-                              }
-                              title={
-                                tipo === "egreso" && m.tercero
-                                  ? m.tercero.activo
-                                    ? "Personal/proveedor registrado y activo"
-                                    : "Personal/proveedor registrado pero dado de baja"
-                                  : undefined
-                              }
-                            >
-                              {tipo === "ingreso"
-                                ? m.pagador || "—"
-                                : m.tercero
-                                  ? nombreCompleto(m.tercero)
-                                  : m.beneficiario || "—"}
-                            </span>
+                            {tipo === "egreso" && m.tercero && m.tercero_id ? (
+                              <Link
+                                href={`/terceros/${m.tercero_id}`}
+                                className={
+                                  "hover:underline " + (m.tercero.activo ? "font-semibold text-primary-dark" : "font-semibold text-muted")
+                                }
+                                title={m.tercero.activo ? "Personal/proveedor registrado y activo" : "Personal/proveedor registrado pero dado de baja"}
+                              >
+                                {nombreCompleto(m.tercero)}
+                              </Link>
+                            ) : (
+                              <span>{tipo === "ingreso" ? m.pagador || "—" : m.beneficiario || "—"}</span>
+                            )}
                             {tipo === "egreso" && m.razon_egreso && (
                               <div className="text-[10px] font-normal text-muted">{m.razon_egreso}</div>
                             )}

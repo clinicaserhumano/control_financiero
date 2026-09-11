@@ -13,6 +13,7 @@ import {
 import { TERCERO_TIPO_LABEL, nombreCompleto } from "@/lib/terceros";
 import type { Cuenta, MovimientoFinanciero, Tercero } from "@/lib/types";
 import SeleccionarHorarios from "./seleccionar-horarios";
+import InfoBoton from "@/components/ayuda/info-boton";
 
 type ModoReporte = "cuenta" | "tercero" | "general" | "horarios";
 
@@ -95,9 +96,9 @@ export default async function ReportesPage({
       cuentaPagaTercero = cuentaPaga?.empresa ?? null;
     }
 
-    const { data: egresosCuentas } = await supabase.from("movimientos_financieros").select("id,cuenta_id,creado_en").eq("tipo", "egreso");
+    const { data: egresosCuentas } = await supabase.from("movimientos_financieros").select("id,cuenta_id,creado_en,referencia").eq("tipo", "egreso");
     const numerosEgreso = numerosEgresoPorCuenta(
-      (egresosCuentas ?? []) as { id: string; cuenta_id: string | null; creado_en: string }[]
+      (egresosCuentas ?? []) as { id: string; cuenta_id: string | null; creado_en: string; referencia: Record<string, unknown> | null }[]
     );
 
     const horasPorMovimiento = new Map<string, { horas: number; semanas: number }>();
@@ -197,9 +198,21 @@ export default async function ReportesPage({
 
   return (
     <div>
-      <p className="text-[12.5px] text-muted -mt-1.5 mb-[18px]">
-        Genera el reporte de una cuenta, de una persona, o el resumen general de todo el sistema, listo para imprimir en A4.
-      </p>
+      <div className="flex items-start gap-2 -mt-1.5 mb-[18px]">
+        <p className="text-[12.5px] text-muted m-0">
+          Genera el reporte de una cuenta, de una persona, o el resumen general de todo el sistema, listo para imprimir en A4.
+        </p>
+        <InfoBoton titulo="Reportes" ancla="reportes">
+          <p className="m-0">
+            Elige un modo arriba, selecciona (Cuenta o Personal) y dale <b>Generar</b>: la tabla completa aparece{" "}
+            <b>ahí mismo en la pantalla</b>, no hace falta imprimir para verla.
+          </p>
+          <p className="m-0">
+            El botón grande <b>🖨️ Imprimir reporte</b> abre la versión lista para PDF, con el mismo contenido que
+            ves en pantalla.
+          </p>
+        </InfoBoton>
+      </div>
 
       <div className="flex gap-1.5 mb-4">
         <Link
@@ -343,9 +356,13 @@ export default async function ReportesPage({
                             <td>{fmtDate(m.fecha)}</td>
                             <td>{m.tipo_movimiento?.nombre || (m.tipo === "ingreso" ? "Ingreso" : "Egreso")}</td>
                             <td className="text-[11px] text-muted">
-                              {[m.tercero ? `${m.tercero.nombre} ${m.tercero.apellido || ""}`.trim() : null, m.concepto]
-                                .filter(Boolean)
-                                .join(" · ")}
+                              {m.tercero && m.tercero_id && (
+                                <Link href={`/terceros/${m.tercero_id}`} className="font-semibold text-ink hover:text-primary hover:underline">
+                                  {nombreCompleto(m.tercero)}
+                                </Link>
+                              )}
+                              {m.tercero && m.concepto ? " · " : ""}
+                              {m.concepto}
                             </td>
                             <td className="text-[11px] text-muted">
                               {Object.values(m.referencia || {}).filter(Boolean).join(" · ") || "—"}
@@ -473,7 +490,11 @@ export default async function ReportesPage({
                         <tbody>
                           {filasPendientesGeneral.map((f) => (
                             <tr key={f.tercero.id}>
-                              <td>{nombreCompleto(f.tercero)}</td>
+                              <td>
+                                <Link href={`/terceros/${f.tercero.id}`} className="font-semibold text-ink hover:text-primary hover:underline">
+                                  {nombreCompleto(f.tercero)}
+                                </Link>
+                              </td>
                               <td className="text-[12px] text-muted">{TERCERO_TIPO_LABEL[f.tercero.tipo]}</td>
                               <td className="td-num">{money(f.pendiente)}</td>
                             </tr>

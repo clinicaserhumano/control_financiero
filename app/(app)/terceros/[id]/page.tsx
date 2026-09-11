@@ -11,6 +11,7 @@ import { BotonAgregarSemana } from "./week-card";
 import BitacoraSemanas from "./bitacora-semanas";
 import AnularButton from "../../movimientos/anular-button";
 import AsignarDiaPago from "./asignar-dia-pago";
+import InfoBoton from "@/components/ayuda/info-boton";
 
 type MovConRelaciones = MovimientoFinanciero & {
   tipo_movimiento: { nombre: string } | null;
@@ -74,7 +75,20 @@ export default async function TerceroDetallePage({
       <div className="card mt-3.5">
         <div className="card-b flex items-center gap-4 flex-wrap">
           <div className="flex-1 min-w-[200px]">
-            <div className="text-lg font-extrabold text-ink">{nombreCompleto(tercero as Tercero)}</div>
+            <div className="text-lg font-extrabold text-ink flex items-center gap-2">
+              {nombreCompleto(tercero as Tercero)}
+              <InfoBoton titulo="Ficha de Personal" ancla="personal">
+                <p className="m-0">
+                  <b>Saldo x pagar</b> es la suma de sus egresos pendientes. <b>Movimientos</b> lista su historial
+                  completo; si es Servicios prestados, la pestaña <b>Bitácora semanal</b> permite cargar la
+                  asistencia y generar el cargo automáticamente.
+                </p>
+                <p className="m-0">
+                  <b>Imprimir estado de cuenta</b> muestra cargo y abono por separado con saldo corrido, horas
+                  trabajadas y el cheque/N° de egreso de cada pago.
+                </p>
+              </InfoBoton>
+            </div>
             <div className="text-[13px] text-muted">
               {TERCERO_TIPO_LABEL[tercero.tipo]}
               {tercero.tarea ? ` · ${tercero.tarea}` : ""}

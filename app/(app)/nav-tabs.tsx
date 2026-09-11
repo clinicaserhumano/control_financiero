@@ -11,6 +11,7 @@ const TABS = [
   { href: "/movimientos?tipo=egreso", label: "Egresos", match: (p: string, q: string) => p.startsWith("/movimientos") && q !== "ingreso" },
   { href: "/cuentas-por-pagar", label: "Cuentas x Pagar", match: (p: string) => p.startsWith("/cuentas-por-pagar") },
   { href: "/reportes", label: "Reportes", match: (p: string) => p.startsWith("/reportes") },
+  { href: "/notas", label: "Notas", match: (p: string) => p.startsWith("/notas") },
 ];
 
 const TAB_USUARIOS = { href: "/usuarios", label: "Usuarios", match: (p: string) => p.startsWith("/usuarios") };

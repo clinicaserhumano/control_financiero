@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { money } from "@/lib/calculos";
 import type { Cuenta } from "@/lib/types";
 import TablaPendientes from "./tabla-pendientes";
+import InfoBoton from "@/components/ayuda/info-boton";
 
 export default async function CuentasPorPagarPage({
   searchParams,
@@ -14,7 +15,7 @@ export default async function CuentasPorPagarPage({
 
   let query = supabase
     .from("movimientos_financieros")
-    .select("id,fecha,concepto,monto,tercero:terceros(nombre,apellido)")
+    .select("id,fecha,concepto,monto,tercero:terceros(id,nombre,apellido)")
     .eq("tipo", "egreso")
     .eq("estado", "pendiente");
   if (desde) query = query.gte("fecha", desde);
@@ -31,10 +32,23 @@ export default async function CuentasPorPagarPage({
 
   return (
     <div>
-      <p className="text-[12.5px] text-muted -mt-1.5 mb-[18px]">
-        Todo egreso en estado &quot;pendiente&quot; aparece aquí automáticamente — nómina, proveedores y servicios
-        comparten la misma tabla, no hay que registrarlos dos veces.
-      </p>
+      <div className="flex items-start gap-2 -mt-1.5 mb-[18px]">
+        <p className="text-[12.5px] text-muted m-0">
+          Todo egreso en estado &quot;pendiente&quot; aparece aquí automáticamente — nómina, proveedores y servicios
+          comparten la misma tabla, no hay que registrarlos dos veces.
+        </p>
+        <InfoBoton titulo="Cuentas por Pagar" ancla="cxp">
+          <p className="m-0">
+            Marca varias filas con las casillas de la izquierda para <b>pagarlas todas juntas</b> (elige cuenta y
+            fecha de pago) o <b>anularlas en bloque</b>. Un nombre en negrita es Personal registrado y lleva a su
+            ficha.
+          </p>
+          <p className="m-0">
+            Si algo aquí ya se pagó por otro lado (un duplicado), no lo borres: anúlalo para que salga de la lista
+            sin perder el historial.
+          </p>
+        </InfoBoton>
+      </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 mb-5">
         <div className="stat">

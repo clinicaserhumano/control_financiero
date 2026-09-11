@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { money, fmtDate, todayISO } from "@/lib/calculos";
 import { nombreCompleto } from "@/lib/terceros";
 import { marcarPagadosMasivo, anularSeleccionados, type MarcarPagadosState } from "./actions";
@@ -14,7 +15,7 @@ type Pendiente = {
   fecha: string;
   concepto: string | null;
   monto: number;
-  tercero: { nombre: string; apellido: string | null } | null;
+  tercero: { id: string; nombre: string; apellido: string | null } | null;
 };
 
 export default function TablaPendientes({ pendientes, cuentas }: { pendientes: Pendiente[]; cuentas: Cuenta[] }) {
@@ -79,7 +80,15 @@ export default function TablaPendientes({ pendientes, cuentas }: { pendientes: P
                     <input type="checkbox" disabled={!esAdmin} checked={seleccion.has(p.id)} onChange={() => toggle(p.id)} />
                   </td>
                   <td>{fmtDate(p.fecha)}</td>
-                  <td className="font-semibold">{p.tercero ? nombreCompleto(p.tercero) : "—"}</td>
+                  <td className="font-semibold">
+                    {p.tercero ? (
+                      <Link href={`/terceros/${p.tercero.id}`} className="hover:underline hover:text-primary">
+                        {nombreCompleto(p.tercero)}
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
                   <td className="text-[12px] text-muted">{p.concepto || "—"}</td>
                   <td className="td-num">{money(p.monto)}</td>
                   <td>

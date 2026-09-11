@@ -355,6 +355,44 @@ body {
       animation: none;
     }
   }
+
+  /* ---------- Notas (sticky notes) ---------- */
+  /* Colores fijos (no dependen de modo claro/oscuro): una nota de papel
+     amarilla se ve amarilla igual de día que de noche. El texto siempre
+     usa un tono oscuro fijo para que el contraste se mantenga en ambos modos. */
+  .nota {
+    border-radius: 3px;
+    padding: 14px 15px 15px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.12);
+    color: #33291a;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 160px;
+    transition: transform 0.15s ease;
+  }
+  .nota:hover {
+    transform: translateY(-2px) rotate(0deg) !important;
+  }
+  .nota-amarillo {
+    background: #fdf1a1;
+  }
+  .nota-rosado {
+    background: #fbd0dd;
+  }
+  .nota-celeste {
+    background: #bfe6f7;
+  }
+  .nota-verde {
+    background: #c8ecc0;
+  }
+  .nota-naranja {
+    background: #ffd0a3;
+  }
+  .nota-vencida {
+    outline: 2px solid var(--color-danger);
+    outline-offset: 2px;
+  }
 }
 
 @keyframes parpadeo-pendiente {

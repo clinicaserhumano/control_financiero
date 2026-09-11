@@ -4,6 +4,7 @@ import { saldoCuenta, money } from "@/lib/calculos";
 import type { Cuenta } from "@/lib/types";
 import CuentaForm from "./cuenta-form";
 import EliminarCuentaButton from "./eliminar-cuenta-button";
+import InfoBoton from "@/components/ayuda/info-boton";
 
 export default async function CuentasPage({
   searchParams,
@@ -31,10 +32,21 @@ export default async function CuentasPage({
 
   return (
     <div>
-      <p className="text-[12.5px] text-muted -mt-1.5 mb-[18px]">
-        Cada cuenta agrupa una empresa, su RUC y la cuenta bancaria. Todos los movimientos (ingresos y egresos)
-        comparten una sola tabla; aquí ves el saldo consolidado de cada cuenta.
-      </p>
+      <div className="flex items-start gap-2 -mt-1.5 mb-[18px]">
+        <p className="text-[12.5px] text-muted m-0">
+          Cada cuenta agrupa una empresa, su RUC y la cuenta bancaria. Todos los movimientos (ingresos y egresos)
+          comparten una sola tabla; aquí ves el saldo consolidado de cada cuenta.
+        </p>
+        <InfoBoton titulo="Cuentas bancarias" ancla="cuentas">
+          <p className="m-0">
+            Cada cuenta es una cuenta bancaria real (o la caja de <b>Efectivo</b>) de una empresa de la clínica.
+          </p>
+          <p className="m-0">
+            Llena el formulario de la izquierda y dale <b>Guardar cuenta</b>. En la lista, <b>Estado de cuenta</b>{" "}
+            muestra todos sus movimientos con saldo acumulado, número de egreso por cheque, y listo para imprimir.
+          </p>
+        </InfoBoton>
+      </div>
       <div className="grid gap-5 lg:grid-cols-[380px_1fr]">
         <CuentaForm cuentaEditando={cuentaEditando} />
 

@@ -44,9 +44,9 @@ export default async function ImprimirTerceroPage({ params }: { params: Promise<
 
   // N° de egreso por cuenta — depende de TODOS los egresos de cada cuenta,
   // no solo de los de esta persona, por eso se trae aparte (liviano).
-  const { data: egresosCuentas } = await supabase.from("movimientos_financieros").select("id,cuenta_id,creado_en").eq("tipo", "egreso");
+  const { data: egresosCuentas } = await supabase.from("movimientos_financieros").select("id,cuenta_id,creado_en,referencia").eq("tipo", "egreso");
   const numerosEgreso = numerosEgresoPorCuenta(
-    (egresosCuentas ?? []) as { id: string; cuenta_id: string | null; creado_en: string }[]
+    (egresosCuentas ?? []) as { id: string; cuenta_id: string | null; creado_en: string; referencia: Record<string, unknown> | null }[]
   );
 
   // Horas trabajadas (y cuántas semanas de bitácora) detrás de cada cargo de

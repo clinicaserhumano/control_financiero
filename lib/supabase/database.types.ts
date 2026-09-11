@@ -211,6 +211,30 @@ export interface Database {
           },
         ];
       };
+      notas: {
+        Row: {
+          id: string;
+          titulo: string;
+          contenido: string | null;
+          color: 'amarillo' | 'rosado' | 'celeste' | 'verde' | 'naranja';
+          recordatorio: { fecha: string; hora: string | null; repetir: 'ninguno' | 'diario' | 'semanal' | 'mensual' } | null;
+          creado_por: string | null;
+          creado_en: string;
+          actualizado_en: string;
+        };
+        Insert: {
+          id?: string;
+          titulo: string;
+          contenido?: string | null;
+          color?: 'amarillo' | 'rosado' | 'celeste' | 'verde' | 'naranja';
+          recordatorio?: { fecha: string; hora: string | null; repetir: 'ninguno' | 'diario' | 'semanal' | 'mensual' } | null;
+          creado_por?: string | null;
+          creado_en?: string;
+          actualizado_en?: string;
+        };
+        Update: Partial<Database['public']['Tables']['notas']['Insert']>;
+        Relationships: [];
+      };
       perfiles_usuario: {
         Row: {
           id: string;

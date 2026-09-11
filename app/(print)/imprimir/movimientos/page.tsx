@@ -73,10 +73,11 @@ export default async function ImprimirMovimientosPage({ searchParams }: { search
   const numerosEgreso =
     tipo === "egreso"
       ? numerosEgresoPorCuenta(
-          ((await supabase.from("movimientos_financieros").select("id,cuenta_id,creado_en").eq("tipo", "egreso")).data ?? []) as {
+          ((await supabase.from("movimientos_financieros").select("id,cuenta_id,creado_en,referencia").eq("tipo", "egreso")).data ?? []) as {
             id: string;
             cuenta_id: string | null;
             creado_en: string;
+            referencia: Record<string, unknown> | null;
           }[]
         )
       : new Map<string, number>();

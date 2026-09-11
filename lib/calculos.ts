@@ -129,12 +129,20 @@ export function saldoCuenta(movimientos: MovParaSaldo[]): number {
    cada cuenta lleva su propia numeración de egresos/cheques)
    ============================================================ */
 
-type MovParaNumero = { id: string; cuenta_id: string | null; creado_en: string };
+type MovParaNumero = {
+  id: string;
+  cuenta_id: string | null;
+  creado_en: string;
+  referencia?: Record<string, unknown> | null;
+};
 
-// Asigna a cada egreso su posición (1, 2, 3…) dentro de los egresos de SU
-// cuenta, ordenados por creado_en. Se calcula siempre por orden de creación
-// (no de fecha) para que sea estable: un egreso ya impreso con su N° nunca
-// cambia de número aunque después se registre otro con fecha anterior.
+// Asigna a cada egreso su N° dentro de los egresos de SU cuenta. Si el
+// egreso ya trae un `referencia.numero_egreso` (el número real, migrado del
+// talonario/respaldo histórico — ver DOCS), se respeta tal cual: es la
+// numeración que la clínica ya usa en papel y no se puede recalcular a
+// partir de la fecha de creación en la base. Los egresos sin ese dato
+// (nuevos, creados directo en la app) siguen numerándose por orden de
+// creación, continuando después del último número real de esa cuenta.
 export function numerosEgresoPorCuenta<T extends MovParaNumero>(egresos: T[]): Map<string, number> {
   const porCuenta = new Map<string, T[]>();
   for (const m of egresos) {
@@ -145,10 +153,21 @@ export function numerosEgresoPorCuenta<T extends MovParaNumero>(egresos: T[]): M
   }
   const numeros = new Map<string, number>();
   for (const lista of porCuenta.values()) {
-    lista
+    let maxReal = 0;
+    const sinNumero: T[] = [];
+    for (const m of lista) {
+      const real = m.referencia?.numero_egreso;
+      if (typeof real === 'number') {
+        numeros.set(m.id, real);
+        if (real > maxReal) maxReal = real;
+      } else {
+        sinNumero.push(m);
+      }
+    }
+    sinNumero
       .slice()
       .sort((a, b) => (a.creado_en || '').localeCompare(b.creado_en || ''))
-      .forEach((m, i) => numeros.set(m.id, i + 1));
+      .forEach((m, i) => numeros.set(m.id, maxReal + i + 1));
   }
   return numeros;
 }

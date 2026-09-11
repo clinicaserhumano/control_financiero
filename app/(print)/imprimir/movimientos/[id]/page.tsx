@@ -29,7 +29,7 @@ const datosMovimiento = cache(async (id: string) => {
   if (m.tipo === "egreso" && m.cuenta_id) {
     const { data: egresosCuenta } = await supabase
       .from("movimientos_financieros")
-      .select("id,cuenta_id,creado_en")
+      .select("id,cuenta_id,creado_en,referencia")
       .eq("cuenta_id", m.cuenta_id)
       .eq("tipo", "egreso");
     numero = numerosEgresoPorCuenta(egresosCuenta ?? []).get(m.id) ?? null;

@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { obtenerNotificaciones, type Notificaciones } from "./actions";
+import { marcarRecordatorioVisto } from "./notas/actions";
 import { money } from "@/lib/calculos";
 
-const VACIO: Notificaciones = { pagosHoy: [], pendientesCount: 0, pendientesTotal: 0 };
+const VACIO: Notificaciones = { pagosHoy: [], pendientesCount: 0, pendientesTotal: 0, notasVencidas: [] };
 
 export default function Campanita() {
   const [datos, setDatos] = useState<Notificaciones>(VACIO);
   const [abierta, setAbierta] = useState(false);
+  const [, startTransition] = useTransition();
   const pathname = usePathname();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -26,7 +28,14 @@ export default function Campanita() {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  const totalAvisos = datos.pagosHoy.length + (datos.pendientesCount > 0 ? 1 : 0);
+  function verNota(id: string) {
+    startTransition(async () => {
+      await marcarRecordatorioVisto(id);
+      setDatos((d) => ({ ...d, notasVencidas: d.notasVencidas.filter((n) => n.id !== id) }));
+    });
+  }
+
+  const totalAvisos = datos.pagosHoy.length + (datos.pendientesCount > 0 ? 1 : 0) + datos.notasVencidas.length;
 
   return (
     <div className="relative" ref={ref}>
@@ -69,11 +78,25 @@ export default function Campanita() {
                   <Link
                     href="/cuentas-por-pagar"
                     onClick={() => setAbierta(false)}
-                    className="block px-3.5 py-2.5 text-[12.5px] hover:bg-[var(--color-surface-2)]"
+                    className="block px-3.5 py-2.5 text-[12.5px] hover:bg-[var(--color-surface-2)] border-b border-border"
                   >
                     Tienes {datos.pendientesCount} cuenta(s) por pagar pendiente(s) · {money(datos.pendientesTotal)}
                   </Link>
                 )}
+                {datos.notasVencidas.map((n) => (
+                  <div key={n.id} className="flex items-center gap-2 px-3.5 py-2.5 text-[12.5px] border-b border-border last:border-b-0">
+                    <Link href="/notas" onClick={() => setAbierta(false)} className="flex-1 hover:underline">
+                      🗒️ Recordatorio: <b>{n.titulo}</b>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => verNota(n.id)}
+                      className="btn-ghost btn-sm !py-1 !px-2 !text-[10.5px] flex-none"
+                    >
+                      Visto
+                    </button>
+                  </div>
+                ))}
               </>
             )}
           </div>

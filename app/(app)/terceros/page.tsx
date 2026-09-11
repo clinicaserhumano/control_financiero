@@ -6,6 +6,7 @@ import type { Cuenta, Tercero } from "@/lib/types";
 import TerceroForm from "./tercero-form";
 import ToggleActivoButton from "./toggle-activo-button";
 import MostrarSelect from "./mostrar-select";
+import InfoBoton from "@/components/ayuda/info-boton";
 
 const GRUPOS = TERCERO_TABS.map((t) => t.grupo);
 
@@ -42,6 +43,22 @@ export default async function TercerosPage({
 
   return (
     <div>
+      <div className="flex items-start gap-2 -mt-1.5 mb-[18px]">
+        <p className="text-[12.5px] text-muted m-0">
+          Aquí vive todo Personal y Proveedor de la clínica, en 3 grupos: Proveedores, Servicios prestados (se paga
+          por hora, con bitácora) y Personal afiliado (sueldo fijo).
+        </p>
+        <InfoBoton titulo="Personal" ancla="personal">
+          <p className="m-0">
+            Llena el formulario de la izquierda para crear a alguien nuevo. Dale clic a un <b>nombre</b> (o a{" "}
+            <b>Ver ficha</b>) para entrar a su detalle: ahí ves su saldo por pagar, editas sus datos, cargas su
+            bitácora si aplica, e imprimes su estado de cuenta u horario.
+          </p>
+          <p className="m-0">
+            El punto naranja junto al nombre avisa que esa persona tiene saldo pendiente por pagar.
+          </p>
+        </InfoBoton>
+      </div>
       <div className="grid gap-5 lg:grid-cols-[380px_1fr]">
         <TerceroForm
           key={terceroEditando?.id ?? "nuevo"}
