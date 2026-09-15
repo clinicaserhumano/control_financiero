@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { login } from "./actions";
 
 type State = { error: string } | null;
@@ -41,6 +42,9 @@ export default function LoginForm({ next }: { next: string }) {
           placeholder="••••••••"
           className="finput"
         />
+        <Link href="/login/recuperar" className="text-[12px] text-primary-dark underline mt-1.5 inline-block">
+          ¿Olvidaste tu contraseña?
+        </Link>
       </div>
       {state?.error && (
         <div className="alert-error">
