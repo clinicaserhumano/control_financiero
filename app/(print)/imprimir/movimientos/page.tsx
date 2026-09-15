@@ -53,7 +53,14 @@ export default async function ImprimirMovimientosPage({ searchParams }: { search
         .select("id")
         .or(`nombre.ilike.%${sp.q}%,apellido.ilike.%${sp.q}%`);
       const idsTerceros_q = (terceros_q ?? []).map((t) => t.id);
-      const condiciones = [`concepto.ilike.%${sp.q}%`, `beneficiario.ilike.%${sp.q}%`];
+      const condiciones = [
+        `concepto.ilike.%${sp.q}%`,
+        `beneficiario.ilike.%${sp.q}%`,
+        `referencia->>numero_egreso.ilike.%${sp.q}%`,
+        `referencia->>cheque.ilike.%${sp.q}%`,
+        `referencia->>comprobante.ilike.%${sp.q}%`,
+        `referencia->>referencia.ilike.%${sp.q}%`,
+      ];
       if (idsTerceros_q.length) condiciones.push(`tercero_id.in.(${idsTerceros_q.join(",")})`);
       query = query.or(condiciones.join(","));
     }

@@ -8,6 +8,7 @@ const SECCIONES = [
   { id: "filtros", titulo: "Filtros y búsqueda en tiempo real" },
   { id: "numeros", titulo: "N° de egreso y cheques" },
   { id: "anular", titulo: "Anular un movimiento" },
+  { id: "editar-detalle", titulo: "Corregir un dato menor sin anular" },
   { id: "personal", titulo: "Personal (Proveedores, Servicios, Afiliados)" },
   { id: "horario", titulo: "Horario de Personal" },
   { id: "bitacora", titulo: "Bitácora semanal" },
@@ -312,10 +313,10 @@ export default function AyudaPage() {
               ).
             </li>
             <li>
-              <b>Buscar personal / concepto:</b> escribe y la lista se filtra sola después de una breve pausa (para
-              no buscar letra por letra). En Egresos, el buscador encuentra tanto por el texto del concepto como por
-              el <b>nombre de la persona</b> registrada como Personal — no hace falta que el nombre aparezca escrito
-              en el concepto.
+              <b>Buscar personal / concepto / N° / cheque:</b> escribe y la lista se filtra sola después de una
+              breve pausa (para no buscar letra por letra). En Egresos, el buscador encuentra por el texto del
+              concepto, por el <b>nombre de la persona</b> registrada como Personal (no hace falta que el nombre
+              aparezca escrito en el concepto), por el <b>N° de egreso</b> y por el <b>N° de cheque/comprobante</b>.
             </li>
             <li>
               <b>Por página:</b> cuántas filas mostrar (5, 10, 50 o todas).
@@ -378,9 +379,36 @@ export default function AyudaPage() {
             </li>
           </ul>
           <Tip>
-            ¿Te equivocaste en un monto o una fecha? No hay edición directa de un movimiento ya confirmado — anula
-            el que está mal y crea uno nuevo con el dato correcto.
+            ¿Te equivocaste en el <b>monto, la fecha, la cuenta o a quién corresponde</b>? Eso sigue sin poderse
+            editar directo — anula el que está mal y crea uno nuevo con el dato correcto. Para un dato menor (el
+            número de cheque, el concepto), ver{" "}
+            <a href="#editar-detalle" className="text-primary-dark underline">
+              Corregir un dato menor sin anular
+            </a>
+            .
           </Tip>
+        </Seccion>
+
+        <Seccion id="editar-detalle" titulo="Corregir un dato menor sin anular">
+          <p>
+            Si en un movimiento <b>ya confirmado</b> (ya pagado) se escribió mal el número de cheque/comprobante, el
+            concepto, o las observaciones, no hace falta anularlo y volver a crearlo — el botón <b>Editar</b> (junto
+            a Imprimir y Anular, solo aparece en movimientos confirmados) abre una pantalla para corregir
+            exactamente esos datos.
+          </p>
+          <p>
+            A propósito, esa pantalla <b>no deja tocar el valor, la fecha, la cuenta ni a quién corresponde</b> —
+            esos campos aparecen bloqueados (en gris), con una nota explicando por qué: permitir cambiar el dinero
+            de un movimiento ya pagado, sin dejar rastro de que se cambió, abriría la puerta a alterar el registro
+            financiero después del hecho — justo lo que el sistema evita al no dejar borrar ni editar movimientos
+            libremente. Si necesitas corregir precisamente uno de esos datos bloqueados, la única vía sigue siendo
+            anular y crear uno nuevo (ver{" "}
+            <a href="#anular" className="text-primary-dark underline">
+              Anular un movimiento
+            </a>
+            ).
+          </p>
+          <p>El N° de egreso ya asignado tampoco se pierde ni cambia al editar estos datos.</p>
         </Seccion>
 
         <Seccion id="personal" titulo="Personal (Proveedores, Servicios prestados, Personal afiliado)">

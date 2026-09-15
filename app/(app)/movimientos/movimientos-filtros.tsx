@@ -138,7 +138,9 @@ export default function MovimientosFiltros({ tipo, cuentas, terceros, tiposMovim
         </select>
       </div>
       <div className="field mb-0">
-        <label className="flabel">{tipo === "ingreso" ? "Buscar pagador / concepto" : "Buscar personal / concepto"}</label>
+        <label className="flabel">
+          {tipo === "ingreso" ? "Buscar pagador / concepto" : "Buscar personal / concepto / N° / cheque"}
+        </label>
         <input type="text" value={q} onChange={(e) => onQChange(e.target.value)} placeholder="Escribe para buscar…" className="finput" />
       </div>
       <div className="field mb-0" style={{ maxWidth: 110 }}>

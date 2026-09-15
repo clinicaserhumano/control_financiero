@@ -191,6 +191,59 @@ export async function confirmarPago(_prev: ConfirmarPagoState, formData: FormDat
   return { ok: true, movimientoId, redirectTo };
 }
 
+export type EditarDetalleState = { error: string } | { ok: true; redirectTo: string } | null;
+
+// Un movimiento ya confirmado nunca cambia su monto, fecha, cuenta ni
+// beneficiario — eso sigue exigiendo anular y crear uno nuevo, para no abrir
+// la puerta a alterar el dinero después del hecho. Pero un dato como el
+// número de cheque escrito mal, o el concepto, no afecta ningún saldo — así
+// que se puede corregir directo, sin perder el N° de egreso ya asignado.
+export async function editarDetalleMovimiento(_prev: EditarDetalleState, formData: FormData): Promise<EditarDetalleState> {
+  const chk = await requireAdmin();
+  if (!chk.ok) return { error: chk.error };
+
+  const movimientoId = String(formData.get("movimiento_id") || "");
+  const redirectTo = String(formData.get("redirect_to") || "/movimientos");
+  if (!movimientoId) return { error: "Movimiento no encontrado." };
+
+  const supabase = await createClient();
+  const { data: original } = await supabase
+    .from("movimientos_financieros")
+    .select("estado,cuenta_id,tercero_id,tipo_movimiento_id,referencia")
+    .eq("id", movimientoId)
+    .single();
+  if (!original) return { error: "Movimiento no encontrado." };
+  if (original.estado !== "confirmado") {
+    return { error: "Solo se pueden editar estos datos en movimientos ya confirmados." };
+  }
+
+  const concepto = String(formData.get("concepto") || "").trim() || null;
+  const observaciones = String(formData.get("observaciones") || "").trim() || null;
+
+  const tipoMovimiento = await obtenerTipoMovimiento(supabase, original.tipo_movimiento_id || "");
+  const referenciaForm = leerReferencia(formData);
+  const errorCampos = validarCamposExtra(tipoMovimiento.campos_extra, referenciaForm);
+  if (errorCampos) return { error: errorCampos };
+
+  // El N° de egreso no viene del formulario (no es editable) — se conserva
+  // tal cual estaba, aunque el resto de referencia (cheque, comprobante…) se
+  // reemplace con lo que se acaba de corregir.
+  const numeroEgreso = (original.referencia as Record<string, unknown> | null)?.numero_egreso;
+  const referencia: Record<string, string> =
+    typeof numeroEgreso === "number"
+      ? ({ ...referenciaForm, numero_egreso: numeroEgreso } as unknown as Record<string, string>)
+      : referenciaForm;
+
+  const { error } = await supabase
+    .from("movimientos_financieros")
+    .update({ concepto, observaciones, referencia })
+    .eq("id", movimientoId);
+  if (error) return { error: "No se pudo guardar." };
+
+  revalidarTodo(original.cuenta_id, original.tercero_id);
+  return { ok: true, redirectTo };
+}
+
 export async function anularMovimiento(id: string) {
   const chk = await requireAdmin();
   if (!chk.ok) return;

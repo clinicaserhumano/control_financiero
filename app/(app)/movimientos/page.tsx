@@ -6,6 +6,7 @@ import type { Cuenta, Tercero, TipoMovimiento, MovimientoFinanciero } from "@/li
 import FormularioMovimiento from "@/components/formulario-movimiento";
 import AnularButton from "./anular-button";
 import MovimientosFiltros from "./movimientos-filtros";
+import { EnlaceAdmin } from "@/lib/auth/boton-admin";
 import InfoBoton from "@/components/ayuda/info-boton";
 
 const PAGINAS_OPCIONES = ["5", "10", "50", "todos"];
@@ -109,7 +110,17 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
         .select("id")
         .or(`nombre.ilike.%${sp.q}%,apellido.ilike.%${sp.q}%`);
       const idsTercerosQ = (terceros_q ?? []).map((t) => t.id);
-      const condiciones = [`concepto.ilike.%${sp.q}%`, `beneficiario.ilike.%${sp.q}%`];
+      // También busca por N° de egreso y por cheque/comprobante/referencia
+      // (van dentro del campo referencia, jsonb) — sin esto, escribir "84"
+      // (el N° de egreso) o un número de cheque no encontraba nada.
+      const condiciones = [
+        `concepto.ilike.%${sp.q}%`,
+        `beneficiario.ilike.%${sp.q}%`,
+        `referencia->>numero_egreso.ilike.%${sp.q}%`,
+        `referencia->>cheque.ilike.%${sp.q}%`,
+        `referencia->>comprobante.ilike.%${sp.q}%`,
+        `referencia->>referencia.ilike.%${sp.q}%`,
+      ];
       if (idsTercerosQ.length) condiciones.push(`tercero_id.in.(${idsTercerosQ.join(",")})`);
       query = query.or(condiciones.join(","));
     }
@@ -332,6 +343,11 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                                   <Link href={`/imprimir/movimientos/${m.id}`} className="btn-navy btn-sm">
                                     🖨️ Imprimir
                                   </Link>
+                                  {m.estado === "confirmado" && (
+                                    <EnlaceAdmin href={`/movimientos/${m.id}/editar?volver=/movimientos?tipo=${tipo}`} className="btn-ghost btn-sm">
+                                      Editar
+                                    </EnlaceAdmin>
+                                  )}
                                   <AnularButton id={m.id} />
                                 </>
                               )}
