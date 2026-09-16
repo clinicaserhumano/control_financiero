@@ -1,17 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { money, fmtDate, totalPorTipoEstado } from "@/lib/calculos";
+import { money, totalPorTipoEstado } from "@/lib/calculos";
 import { TERCERO_TIPO_LABEL, nombreCompleto, direccionParaTercero, formatearHorario } from "@/lib/terceros";
-import { EnlaceAdmin } from "@/lib/auth/boton-admin";
 import type { Cuenta, MovimientoFinanciero, Tercero, TipoMovimiento } from "@/lib/types";
 import FormularioMovimiento from "@/components/formulario-movimiento";
 import ToggleActivoButton from "../toggle-activo-button";
 import { BotonAgregarSemana } from "./week-card";
 import BitacoraSemanas from "./bitacora-semanas";
-import AnularButton from "../../movimientos/anular-button";
 import AsignarDiaPago from "./asignar-dia-pago";
 import InfoBoton from "@/components/ayuda/info-boton";
+import MovimientosTabla from "./movimientos-tabla";
 
 type MovConRelaciones = MovimientoFinanciero & {
   tipo_movimiento: { nombre: string } | null;
@@ -110,6 +109,11 @@ export default async function TerceroDetallePage({
             <Link href={`/imprimir/terceros/${id}`} className="btn-navy btn-sm">
               🖨️ Imprimir estado de cuenta
             </Link>
+            {pendiente > 0 && (
+              <Link href={`/imprimir/terceros/${id}/pendiente`} className="btn-ghost btn-sm">
+                🖨️ Imprimir solo el saldo pendiente
+              </Link>
+            )}
             {tieneHorario && (
               <Link href={`/imprimir/terceros/${id}/horario`} className="btn-navy btn-sm">
                 🖨️ Imprimir horario
@@ -182,61 +186,7 @@ export default async function TerceroDetallePage({
                   Registra el primero con el formulario de la izquierda.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="table-base">
-                    <thead>
-                      <tr>
-                        <th>Fecha</th>
-                        <th>Tipo</th>
-                        <th>Concepto</th>
-                        <th>Cuenta</th>
-                        <th>Estado</th>
-                        <th className="td-num">Valor</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lista.map((m) => (
-                        <tr key={m.id} className={m.estado === "anulado" ? "opacity-40" : ""}>
-                          <td>{fmtDate(m.fecha)}</td>
-                          <td>{m.tipo_movimiento?.nombre || (m.origen === "nomina" ? "Nómina" : "—")}</td>
-                          <td className="text-[12px] text-muted">{m.concepto || "—"}</td>
-                          <td className="text-[12px] text-muted">{m.cuenta ? `${m.cuenta.banco} · ${m.cuenta.numero}` : "—"}</td>
-                          <td>
-                            <span
-                              className={
-                                "pill " +
-                                (m.estado === "confirmado"
-                                  ? ""
-                                  : m.estado === "pendiente"
-                                    ? "pill-warning"
-                                    : "pill-danger")
-                              }
-                            >
-                              {m.estado === "confirmado" ? "Confirmado" : m.estado === "pendiente" ? "Pendiente" : "Anulado"}
-                            </span>
-                          </td>
-                          <td className="td-num">
-                            {money(m.monto)}
-                            {m.descuento != null && m.descuento > 0 && (
-                              <div className="text-[10px] font-normal text-muted">− {money(m.descuento)} desc.</div>
-                            )}
-                          </td>
-                          <td>
-                            <div className="flex gap-1.5 justify-end">
-                              {m.estado === "pendiente" && (
-                                <EnlaceAdmin href={`/movimientos/${m.id}/pagar?volver=/terceros/${id}`} className="btn-gold btn-sm">
-                                  Registrar pago
-                                </EnlaceAdmin>
-                              )}
-                              {m.estado !== "anulado" && <AnularButton id={m.id} />}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <MovimientosTabla movimientos={lista} terceroId={id} />
               )}
             </div>
           </div>

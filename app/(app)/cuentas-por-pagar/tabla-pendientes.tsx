@@ -1,14 +1,13 @@
 "use client";
 
-import { useActionState, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { money, fmtDate, todayISO } from "@/lib/calculos";
+import { money, fmtDate } from "@/lib/calculos";
 import { nombreCompleto } from "@/lib/terceros";
-import { marcarPagadosMasivo, anularSeleccionados, type MarcarPagadosState } from "./actions";
+import { anularSeleccionados } from "./actions";
 import { useEsAdmin } from "@/lib/auth/role-context";
 import { BotonAdmin, EnlaceAdmin } from "@/lib/auth/boton-admin";
 import AnularButton from "../movimientos/anular-button";
-import type { Cuenta } from "@/lib/types";
 
 type Pendiente = {
   id: string;
@@ -18,15 +17,10 @@ type Pendiente = {
   tercero: { id: string; nombre: string; apellido: string | null } | null;
 };
 
-export default function TablaPendientes({ pendientes, cuentas }: { pendientes: Pendiente[]; cuentas: Cuenta[] }) {
+export default function TablaPendientes({ pendientes }: { pendientes: Pendiente[] }) {
   const esAdmin = useEsAdmin();
   const [seleccion, setSeleccion] = useState<Set<string>>(new Set());
   const [pendienteAnular, startTransition] = useTransition();
-  const [state, formAction, pending] = useActionState<MarcarPagadosState, FormData>(async (_prev, formData) => {
-    const result = await marcarPagadosMasivo(_prev, formData);
-    if (!result) setSeleccion(new Set());
-    return result;
-  }, null);
 
   const todasSeleccionadas = pendientes.length > 0 && pendientes.every((p) => seleccion.has(p.id));
   const totalSeleccion = useMemo(
@@ -93,6 +87,11 @@ export default function TablaPendientes({ pendientes, cuentas }: { pendientes: P
                   <td className="td-num">{money(p.monto)}</td>
                   <td>
                     <div className="flex gap-1.5 justify-end">
+                      {p.tercero && (
+                        <Link href={`/imprimir/terceros/${p.tercero.id}/pendiente`} className="btn-ghost btn-sm">
+                          🖨️ Saldo pendiente
+                        </Link>
+                      )}
                       <EnlaceAdmin href={`/movimientos/${p.id}/pagar?volver=/cuentas-por-pagar`} className="btn-gold btn-sm">
                         Registrar pago
                       </EnlaceAdmin>
@@ -111,23 +110,22 @@ export default function TablaPendientes({ pendientes, cuentas }: { pendientes: P
           <div className="font-bold text-[13px] whitespace-nowrap">
             <b className="text-amber">{seleccion.size}</b> seleccionado(s) · {money(totalSeleccion)}
           </div>
-          <form action={formAction} className="flex items-center gap-2 flex-wrap">
-            {[...seleccion].map((id) => (
-              <input key={id} type="hidden" name="ids" value={id} />
-            ))}
-            <select name="cuenta_id" required disabled={!esAdmin} className="finput !w-auto !py-1.5 !text-xs">
-              <option value="">— Cuenta —</option>
-              {cuentas.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.empresa} — {c.numero}
-                </option>
-              ))}
-            </select>
-            <input type="date" name="fecha_pago" disabled={!esAdmin} defaultValue={todayISO()} className="finput !w-auto !py-1.5 !text-xs" />
-            <BotonAdmin type="submit" disabled={pending} className="btn-gold btn-sm">
-              {pending ? "…" : "✓ Marcar pagados"}
-            </BotonAdmin>
-          </form>
+          {seleccion.size >= 2 ? (
+            <EnlaceAdmin
+              href={`/movimientos/pagar-conjunto?ids=${[...seleccion].join(",")}&volver=${encodeURIComponent("/cuentas-por-pagar")}`}
+              className="btn-gold btn-sm"
+            >
+              Continuar con el pago →
+            </EnlaceAdmin>
+          ) : (
+            <span className="text-[11.5px] text-white/70">Selecciona al menos 2 para combinarlos en un pago</span>
+          )}
+          <Link
+            href={`/imprimir/movimientos/pendientes?ids=${[...seleccion].join(",")}&volver=${encodeURIComponent("/cuentas-por-pagar")}`}
+            className="btn-ghost btn-sm"
+          >
+            🖨️ Imprimir seleccionados
+          </Link>
           <BotonAdmin
             disabled={pendienteAnular}
             className="btn-danger btn-sm"
@@ -147,7 +145,6 @@ export default function TablaPendientes({ pendientes, cuentas }: { pendientes: P
           </button>
         </div>
       )}
-      {state?.error && <div className="alert-error mt-3 mx-4">{state.error}</div>}
     </div>
   );
 }

@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { money, fmtDate, todayISO, addDaysISO, numerosEgresoPorCuenta } from "@/lib/calculos";
-import { nombreCompleto } from "@/lib/terceros";
 import type { Cuenta, Tercero, TipoMovimiento, MovimientoFinanciero } from "@/lib/types";
 import FormularioMovimiento from "@/components/formulario-movimiento";
-import AnularButton from "./anular-button";
 import MovimientosFiltros from "./movimientos-filtros";
-import { EnlaceAdmin } from "@/lib/auth/boton-admin";
+import MovimientosListaTabla from "./movimientos-lista-tabla";
 import InfoBoton from "@/components/ayuda/info-boton";
 
 const PAGINAS_OPCIONES = ["5", "10", "50", "todos"];
@@ -181,6 +179,10 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
             <b>Imprimir</b> (con el ícono 🖨️) abre el comprobante individual;{" "}
             <b>Imprimir rango (A4)</b> imprime todo lo que está filtrado en ese momento.
           </p>
+          <p className="m-0">
+            Marca varias filas con la casilla de la izquierda para <b>imprimirlas juntas</b> o{" "}
+            <b>anularlas en bloque</b> desde la barra que aparece abajo.
+          </p>
         </InfoBoton>
       </div>
       <div className="grid gap-5 lg:grid-cols-[380px_1fr]">
@@ -257,108 +259,12 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                 </Link>
               </div>
 
-              <div className="overflow-x-auto mt-3.5">
-                <table className="table-base">
-                  <thead>
-                    <tr>
-                      {tipo === "egreso" && <th>N°</th>}
-                      <th>Fecha</th>
-                      <th>Tipo</th>
-                      <th>{tipo === "ingreso" ? "Pagador" : "Beneficiario"}</th>
-                      <th>Cuenta</th>
-                      {tipo === "egreso" && <th>Cheque / Ref.</th>}
-                      <th>Estado</th>
-                      <th className="td-num">Valor</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pagina.length === 0 ? (
-                      <tr>
-                        <td colSpan={tipo === "egreso" ? 9 : 7}>
-                          <div className="empty-state">
-                            <div className="empty-title">
-                              Sin {tipo === "ingreso" ? "ingresos" : "egresos"}
-                            </div>
-                            Registra el primero con el formulario de la izquierda.
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      pagina.map((m) => (
-                        <tr key={m.id} className={m.estado === "anulado" ? "opacity-40" : ""}>
-                          {tipo === "egreso" && (
-                            <td className="text-[12px] text-muted">{numerosEgreso.get(m.id) ?? "—"}</td>
-                          )}
-                          <td>{fmtDate(m.fecha)}</td>
-                          <td>{m.tipo_movimiento?.nombre || "—"}</td>
-                          <td>
-                            {tipo === "egreso" && m.tercero && m.tercero_id ? (
-                              <Link
-                                href={`/terceros/${m.tercero_id}`}
-                                className={
-                                  "hover:underline " + (m.tercero.activo ? "font-semibold text-primary-dark" : "font-semibold text-muted")
-                                }
-                                title={m.tercero.activo ? "Personal/proveedor registrado y activo" : "Personal/proveedor registrado pero dado de baja"}
-                              >
-                                {nombreCompleto(m.tercero)}
-                              </Link>
-                            ) : (
-                              <span>{tipo === "ingreso" ? m.pagador || "—" : m.beneficiario || "—"}</span>
-                            )}
-                            {tipo === "egreso" && m.razon_egreso && (
-                              <div className="text-[10px] font-normal text-muted">{m.razon_egreso}</div>
-                            )}
-                          </td>
-                          <td className="text-[12px] text-muted">{m.cuenta ? `${m.cuenta.banco} · ${m.cuenta.numero}` : "—"}</td>
-                          {tipo === "egreso" && (
-                            <td className="text-[12px] text-muted">
-                              {Object.values(m.referencia || {}).filter(Boolean).join(" · ") || "—"}
-                            </td>
-                          )}
-                          <td>
-                            <span
-                              className={
-                                "pill " +
-                                (m.estado === "confirmado"
-                                  ? ""
-                                  : m.estado === "pendiente"
-                                    ? "pill-warning"
-                                    : "pill-danger")
-                              }
-                            >
-                              {m.estado === "confirmado" ? "Confirmado" : m.estado === "pendiente" ? "Pendiente" : "Anulado"}
-                            </span>
-                          </td>
-                          <td className="td-num">
-                            {money(m.monto)}
-                            {m.descuento != null && m.descuento > 0 && (
-                              <div className="text-[10px] font-normal text-muted">− {money(m.descuento)} desc.</div>
-                            )}
-                          </td>
-                          <td>
-                            <div className="flex gap-1.5 justify-end">
-                              {m.estado !== "anulado" && (
-                                <>
-                                  <Link href={`/imprimir/movimientos/${m.id}`} className="btn-navy btn-sm">
-                                    🖨️ Imprimir
-                                  </Link>
-                                  {m.estado === "confirmado" && (
-                                    <EnlaceAdmin href={`/movimientos/${m.id}/editar?volver=/movimientos?tipo=${tipo}`} className="btn-ghost btn-sm">
-                                      Editar
-                                    </EnlaceAdmin>
-                                  )}
-                                  <AnularButton id={m.id} />
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <MovimientosListaTabla
+                pagina={pagina}
+                tipo={tipo}
+                numerosEgreso={Object.fromEntries(numerosEgreso)}
+                volver={`/movimientos?tipo=${tipo}`}
+              />
 
               {lista.length > 0 && (
                 <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-3 border-t border-border">

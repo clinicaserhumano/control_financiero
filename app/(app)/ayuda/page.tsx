@@ -367,7 +367,9 @@ export default function AyudaPage() {
           <ul className="list-disc pl-5 flex flex-col gap-1">
             <li>
               El botón <b>Anular</b> está en cada fila de la lista de Ingresos/Egresos, en la ficha de Personal, y
-              en Cuentas por Pagar (individual o en bloque, marcando varias filas).
+              en Cuentas por Pagar (individual o en bloque, marcando varias filas). En Ingresos/Egresos también
+              puedes marcar varias filas (confirmadas o pendientes) con la casilla de la izquierda y{" "}
+              <b>🖨️ Imprimir seleccionados</b> o <b>Anular seleccionados</b> desde la barra que aparece abajo.
             </li>
             <li>
               Un movimiento anulado sale con la <b>fila atenuada en gris</b> en las listas, y ya no tiene botón
@@ -444,6 +446,16 @@ export default function AyudaPage() {
             Ese mismo enlace al nombre de una persona también aparece en otras pantallas del sistema — en el
             listado de Egresos, en Cuentas por Pagar, en el detalle de una cuenta bancaria, y en Reportes — siempre
             que esa persona esté registrada como Personal (no aplica a beneficiarios escritos como texto libre).
+          </p>
+          <p>
+            En la pestaña <b>Movimientos</b> de la ficha, cada fila <b>pendiente</b> trae una casilla a la
+            izquierda — marca dos o más y dale a <b>Continuar con el pago</b> para <b>combinarlas en un solo pago</b>,
+            igual que en Cuentas por Pagar. Te lleva a la misma pantalla de Registrar pago (forma de pago, cuenta,
+            N° de cheque u otros campos según corresponda, y descuento si aplica), solo que el concepto y el valor
+            ya vienen combinados con los de todos los movimientos seleccionados. El botón{" "}
+            <b>🖨️ Imprimir seleccionados</b> saca un papel con esos mismos pendientes juntos (fecha, concepto y
+            valor de cada uno, más el total) sin necesidad de registrar el pago todavía. También puedes anularlas
+            en bloque.
           </p>
           <Tip>
             El color del nombre de Personal es un código: <b>naranja</b> significa registrado y activo,{" "}
@@ -534,11 +546,20 @@ export default function AyudaPage() {
           <ul className="list-disc pl-5 flex flex-col gap-1">
             <li>Filtrar por fecha, y darle a Registrar pago en un pendiente individual para pagarlo.</li>
             <li>
-              Marcar varios con las casillas de la izquierda y pagarlos todos juntos (elige la cuenta y la fecha de
-              pago, y confirma) o anularlos en bloque.
+              Marcar dos o más con las casillas de la izquierda y darle a <b>Continuar con el pago</b> para
+              combinarlos en un solo pago — lleva a la misma pantalla de Registrar pago (forma de pago, cuenta, N°
+              de cheque, descuento) con el concepto y el valor ya combinados. También puedes anularlos en bloque.
+            </li>
+            <li>
+              Con la selección marcada, el botón <b>🖨️ Imprimir seleccionados</b> saca un papel con esos pendientes
+              juntos (pueden ser de distintas personas) y su total, sin registrar el pago todavía.
             </li>
             <li>
               Dar clic al nombre de una persona (si está registrada como Personal) para ir directo a su ficha.
+            </li>
+            <li>
+              El botón <b>🖨️ Saldo pendiente</b> en cada fila (solo si es Personal registrado) imprime un papel
+              corto con únicamente lo que esa persona debe cobrar, sin el historial de lo ya pagado.
             </li>
             <li>Imprimir el listado completo.</li>
           </ul>
@@ -579,6 +600,16 @@ export default function AyudaPage() {
             solo para ver los datos. El botón grande <b>🖨️ Imprimir reporte</b>, justo arriba de la tabla, abre la
             versión lista para imprimir o guardar como PDF, con el mismo contenido que ves en pantalla, el logo de
             la clínica arriba a la izquierda y quién generó el documento al pie de la página.
+          </p>
+          <p>
+            En <b>Por cuenta</b> y <b>Por Personal</b>, el rango Desde/Hasta filtra qué filas se muestran e
+            imprimen, pero el <b>saldo</b> de cada fila y el total pendiente siempre se calculan sobre{" "}
+            <b>todo el historial</b> — así nunca se ve un saldo que no cuadra por haber cortado fechas de en medio.
+          </p>
+          <p>
+            En <b>Por Personal</b>, además del reporte completo, el botón <b>🖨️ Imprimir solo el saldo pendiente</b>{" "}
+            genera un papel corto con únicamente lo que esa persona todavía debe cobrar — sin el historial de lo ya
+            pagado. El mismo botón está disponible desde la ficha de la persona, cuando tiene saldo pendiente.
           </p>
           <Tip>
             Cualquier documento del sistema (comprobantes, papeletas, estados de cuenta, reportes) se puede

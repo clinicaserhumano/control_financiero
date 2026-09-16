@@ -47,7 +47,7 @@ export default async function ReportesPage({
   let cuentaSeleccionada: Cuenta | null = null;
 
   // ---- Datos para la tabla en vivo de "Por Personal" (estado de cuenta) ----
-  const filasTercero: Fila[] = [];
+  let filasTercero: Fila[] = [];
   let terceroSeleccionado: Tercero | null = null;
   let cuentaPagaTercero: string | null = null;
 
@@ -109,6 +109,12 @@ export default async function ReportesPage({
       horasPorMovimiento.set(s.movimiento_id, { horas: previo.horas + horas, semanas: previo.semanas + 1 });
     }
 
+    // El saldo corrido se calcula sobre TODO el historial (si no, filtrar
+    // por fecha rompería el acumulado — se vería un saldo que no cuadra con
+    // lo que realmente debe la persona). El rango Desde/Hasta solo decide
+    // qué filas de ese historial ya calculado se muestran, igual que en
+    // "Por cuenta".
+    const filasTerceroCompletas: Fila[] = [];
     let saldo = 0;
     for (const m of lista) {
       const horasInfo = horasPorMovimiento.get(m.id);
@@ -121,7 +127,7 @@ export default async function ReportesPage({
             ? `${horasAprox.toFixed(2)} h`
             : "—";
       saldo += Number(m.monto);
-      filasTercero.push({ fecha: m.fecha, concepto: m.concepto || "—", valor: Number(m.monto), abono: null, saldo, obs: obsCargo });
+      filasTerceroCompletas.push({ fecha: m.fecha, concepto: m.concepto || "—", valor: Number(m.monto), abono: null, saldo, obs: obsCargo });
 
       if (m.estado === "confirmado") {
         const referencia = (m.referencia || {}) as Record<string, string>;
@@ -135,9 +141,10 @@ export default async function ReportesPage({
         if (numeroEgreso != null) obsPago += ` · Egreso N° ${numeroEgreso}`;
         if (m.descuento) obsPago += ` · Desc. ${money(m.descuento)}`;
         saldo -= Number(m.monto);
-        filasTercero.push({ fecha: m.fecha_pago || m.fecha, concepto: m.concepto || "—", valor: null, abono: Number(m.monto), saldo, obs: obsPago });
+        filasTerceroCompletas.push({ fecha: m.fecha_pago || m.fecha, concepto: m.concepto || "—", valor: null, abono: Number(m.monto), saldo, obs: obsPago });
       }
     }
+    filasTercero = filasTerceroCompletas.filter((f) => (!sp.desde || f.fecha >= sp.desde) && (!sp.hasta || f.fecha <= sp.hasta));
 
     resumen = {
       etiquetas: [
@@ -305,13 +312,20 @@ export default async function ReportesPage({
           {mostrarResumen && resumen && (
             <div className="mt-5">
               {hrefImprimir && (
-                <Link
-                  href={`${hrefImprimir}?desde=${sp.desde || ""}&hasta=${sp.hasta || ""}`}
-                  className="btn-navy mb-4"
-                  style={{ fontSize: 15, padding: "13px 22px" }}
-                >
-                  🖨️ Imprimir reporte
-                </Link>
+                <div className="flex gap-2.5 flex-wrap mb-4">
+                  <Link
+                    href={`${hrefImprimir}?desde=${sp.desde || ""}&hasta=${sp.hasta || ""}`}
+                    className="btn-navy"
+                    style={{ fontSize: 15, padding: "13px 22px" }}
+                  >
+                    🖨️ Imprimir reporte
+                  </Link>
+                  {modo === "tercero" && sp.id && (
+                    <Link href={`/imprimir/terceros/${sp.id}/pendiente`} className="btn-ghost" style={{ fontSize: 15, padding: "13px 22px" }}>
+                      🖨️ Imprimir solo el saldo pendiente
+                    </Link>
+                  )}
+                </div>
               )}
 
               <div className="grid grid-cols-2 gap-3.5 mb-5">

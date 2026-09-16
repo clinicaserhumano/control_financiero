@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { money, fmtDate, todayISO, calcularHorasSemana, numerosEgresoPorCuenta } from "@/lib/calculos";
+import { money, fmtDate, todayISO, calcularHorasSemana, numerosEgresoPorCuenta, totalPorTipoEstado } from "@/lib/calculos";
 import { TERCERO_TIPO_LABEL, nombreCompleto } from "@/lib/terceros";
 import { obtenerPerfilActual } from "@/lib/auth/perfil";
 import PrintStyles from "@/components/print/print-styles";
@@ -18,8 +18,15 @@ type MovConNombres = MovimientoFinanciero & { tipo_movimiento: { nombre: string 
 // que no vuelve a bajar es exactamente el saldo por pagar.
 type Fila = { fecha: string; concepto: string; valor: number | null; abono: number | null; saldo: number; obs: string };
 
-export default async function ImprimirTerceroPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ImprimirTerceroPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ desde?: string; hasta?: string }>;
+}) {
   const { id } = await params;
+  const { desde, hasta } = await searchParams;
   const supabase = await createClient();
   const perfil = await obtenerPerfilActual();
 
@@ -100,9 +107,20 @@ export default async function ImprimirTerceroPage({ params }: { params: Promise<
     }
   }
 
-  const totalValor = filas.reduce((s, f) => s + (f.valor || 0), 0);
-  const totalAbono = filas.reduce((s, f) => s + (f.abono || 0), 0);
-  const saldoFinal = filas.length ? filas[filas.length - 1].saldo : 0;
+  // El saldo por cobrar/pagar real es el de TODA la historia (no depende del
+  // rango de fechas elegido) — si no, filtrar el rango podría esconder un
+  // pendiente antiguo y hacer parecer que no debe nada. El rango Desde/Hasta
+  // solo decide qué filas del historial ya calculado se imprimen.
+  const saldoPendienteReal = totalPorTipoEstado(lista, "egreso", "pendiente");
+  const filasImpresas = filas.filter((f) => (!desde || f.fecha >= desde) && (!hasta || f.fecha <= hasta));
+  const totalValor = filasImpresas.reduce((s, f) => s + (f.valor || 0), 0);
+  const totalAbono = filasImpresas.reduce((s, f) => s + (f.abono || 0), 0);
+  const saldoFinal = filasImpresas.length ? filasImpresas[filasImpresas.length - 1].saldo : 0;
+
+  let periodo = "Todas las fechas";
+  if (desde && hasta) periodo = `${fmtDate(desde)} al ${fmtDate(hasta)}`;
+  else if (desde) periodo = `Desde ${fmtDate(desde)}`;
+  else if (hasta) periodo = `Hasta ${fmtDate(hasta)}`;
 
   return (
     <>
@@ -122,6 +140,7 @@ export default async function ImprimirTerceroPage({ params }: { params: Promise<
                 .filter(Boolean)
                 .join(" · ")}
             </div>
+            {(desde || hasta) && <div className="badge">Período: {periodo}</div>}
           </div>
         </div>
 
@@ -137,12 +156,12 @@ export default async function ImprimirTerceroPage({ params }: { params: Promise<
             </tr>
           </thead>
           <tbody>
-            {filas.length === 0 ? (
+            {filasImpresas.length === 0 ? (
               <tr>
-                <td colSpan={6}>Sin movimientos registrados.</td>
+                <td colSpan={6}>Sin movimientos registrados{(desde || hasta) ? " en ese rango de fechas" : ""}.</td>
               </tr>
             ) : (
-              filas.map((f, i) => (
+              filasImpresas.map((f, i) => (
                 <tr key={i}>
                   <td>{fmtDate(f.fecha)}</td>
                   <td>{f.concepto}</td>
@@ -169,7 +188,7 @@ export default async function ImprimirTerceroPage({ params }: { params: Promise<
           <span>
             Generado el {fmtDate(todayISO())} por {perfil?.alias || perfil?.email || "—"}
           </span>
-          <span>Saldo x pagar: {money(saldoFinal)}</span>
+          <span>Saldo x pagar (total): {money(saldoPendienteReal)}</span>
         </div>
       </div>
     </>

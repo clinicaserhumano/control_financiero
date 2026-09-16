@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { money } from "@/lib/calculos";
-import type { Cuenta } from "@/lib/types";
 import TablaPendientes from "./tabla-pendientes";
 import InfoBoton from "@/components/ayuda/info-boton";
 
@@ -22,10 +21,7 @@ export default async function CuentasPorPagarPage({
   if (hasta) query = query.lte("fecha", hasta);
   query = query.order("fecha", { ascending: true });
 
-  const [{ data: pendientes }, { data: cuentas }] = await Promise.all([
-    query,
-    supabase.from("cuentas").select("*").order("empresa"),
-  ]);
+  const { data: pendientes } = await query;
 
   const lista = pendientes ?? [];
   const total = lista.reduce((s, p) => s + Number(p.monto || 0), 0);
@@ -39,9 +35,9 @@ export default async function CuentasPorPagarPage({
         </p>
         <InfoBoton titulo="Cuentas por Pagar" ancla="cxp">
           <p className="m-0">
-            Marca varias filas con las casillas de la izquierda para <b>pagarlas todas juntas</b> (elige cuenta y
-            fecha de pago) o <b>anularlas en bloque</b>. Un nombre en negrita es Personal registrado y lleva a su
-            ficha.
+            Marca dos o más filas con las casillas de la izquierda y dale a <b>Continuar con el pago</b> para
+            combinarlas en un solo pago, o <b>anúlalas en bloque</b>. Un nombre en negrita es Personal registrado y
+            lleva a su ficha.
           </p>
           <p className="m-0">
             Si algo aquí ya se pagó por otro lado (un duplicado), no lo borres: anúlalo para que salga de la lista
@@ -92,7 +88,7 @@ export default async function CuentasPorPagarPage({
             </Link>
           </form>
 
-          <TablaPendientes pendientes={lista} cuentas={(cuentas ?? []) as Cuenta[]} />
+          <TablaPendientes pendientes={lista} />
         </div>
       </div>
     </div>

@@ -191,6 +191,74 @@ export async function confirmarPago(_prev: ConfirmarPagoState, formData: FormDat
   return { ok: true, movimientoId, redirectTo };
 }
 
+export type ConfirmarConjuntoState = { error: string } | { ok: true; redirectTo: string } | null;
+
+// Combina varios egresos pendientes en un solo pago (un solo cheque/forma de
+// pago para todos) — cada uno sigue siendo su propia fila en la base, para
+// no perder el detalle de qué período o factura cubre cada uno, pero
+// comparten cuenta, fecha de pago, forma de pago y N° de cheque. Un
+// descuento sobre el total (si hay) se deja completo en el último de la
+// lista, visible ahí — repartirlo en silencio entre varios cargos distintos
+// sería más confuso que dejarlo en uno solo y explicado.
+export async function confirmarPagoConjunto(_prev: ConfirmarConjuntoState, formData: FormData): Promise<ConfirmarConjuntoState> {
+  const chk = await requireAdmin();
+  if (!chk.ok) return { error: chk.error };
+
+  const ids = formData.getAll("movimiento_ids").map(String).filter(Boolean);
+  const tipoMovimientoId = String(formData.get("tipo_movimiento_id") || "");
+  const cuentaId = String(formData.get("cuenta_id") || "") || null;
+  const fechaPago = String(formData.get("fecha_pago") || "");
+  const redirectTo = String(formData.get("redirect_to") || "/movimientos");
+
+  if (ids.length < 2) return { error: "Selecciona al menos dos movimientos para combinar." };
+  if (!tipoMovimientoId) return { error: "Selecciona la forma de pago." };
+  if (!fechaPago) return { error: "Ingresa la fecha de pago." };
+
+  const supabase = await createClient();
+  const referencia = leerReferencia(formData);
+  const tipoMovimiento = await obtenerTipoMovimiento(supabase, tipoMovimientoId);
+  const errorCampos = validarCamposExtra(tipoMovimiento.campos_extra, referencia);
+  if (errorCampos) return { error: errorCampos };
+  if (tipoMovimiento.requiere_cuenta && !cuentaId) return { error: "Selecciona la cuenta." };
+
+  const { data: originales } = await supabase
+    .from("movimientos_financieros")
+    .select("id,tercero_id,monto,estado")
+    .in("id", ids);
+  if (!originales || originales.length !== ids.length) return { error: "Alguno de los movimientos ya no existe." };
+  if (originales.some((m) => m.estado !== "pendiente")) {
+    return { error: "Alguno de los movimientos seleccionados ya no está pendiente — actualiza la página." };
+  }
+
+  const totalBase = originales.reduce((s, m) => s + Number(m.monto), 0);
+  const r = leerDescuento(formData, totalBase);
+  if (!r.ok) return { error: r.error };
+
+  for (let i = 0; i < originales.length; i++) {
+    const m = originales[i];
+    const esUltimo = i === originales.length - 1;
+    const montoFinal = esUltimo && r.descuento ? Number(m.monto) - r.descuento : Number(m.monto);
+    const { error } = await supabase
+      .from("movimientos_financieros")
+      .update({
+        estado: "confirmado",
+        cuenta_id: cuentaId,
+        fecha_pago: fechaPago,
+        tipo_movimiento_id: tipoMovimientoId,
+        referencia,
+        monto: montoFinal,
+        descuento: esUltimo ? r.descuento : null,
+        observaciones: esUltimo ? r.observaciones : null,
+      })
+      .eq("id", m.id);
+    if (error) return { error: "No se pudo registrar el pago combinado." };
+  }
+
+  revalidarTodo(cuentaId, null);
+  originales.forEach((m) => m.tercero_id && revalidatePath(`/terceros/${m.tercero_id}`));
+  return { ok: true, redirectTo };
+}
+
 export type EditarDetalleState = { error: string } | { ok: true; redirectTo: string } | null;
 
 // Un movimiento ya confirmado nunca cambia su monto, fecha, cuenta ni

@@ -22,6 +22,8 @@ type SP = {
   tipoMov?: string;
   estado?: string;
   q?: string;
+  ids?: string;
+  volver?: string;
 };
 
 export default async function ImprimirMovimientosPage({ searchParams }: { searchParams: Promise<SP> }) {
@@ -30,39 +32,47 @@ export default async function ImprimirMovimientosPage({ searchParams }: { search
   const supabase = await createClient();
   const perfil = await obtenerPerfilActual();
 
+  // Selección manual (checkboxes en el listado de Ingresos/Egresos): imprime
+  // exactamente esos registros, ignorando los demás filtros de la URL.
+  const idsSeleccionados = (sp.ids || "").split(",").filter(Boolean);
+
   let query = supabase
     .from("movimientos_financieros")
     .select(
       "*, tipo_movimiento:tipos_movimiento(nombre), tercero:terceros(nombre,apellido,precio_hora), cuenta:cuentas(empresa,banco,numero)"
     )
     .eq("tipo", tipo);
-  if (sp.cuenta) query = query.eq("cuenta_id", sp.cuenta);
-  if (sp.tercero) query = query.eq("tercero_id", sp.tercero);
-  if (sp.tipoMov) query = query.eq("tipo_movimiento_id", sp.tipoMov);
-  // Los anulados nunca se imprimen (ver abajo), así que solo se reenvía el
-  // filtro de estado cuando pide confirmado o pendiente puntualmente.
-  if (sp.estado === "confirmado" || sp.estado === "pendiente") query = query.eq("estado", sp.estado);
-  if (sp.desde) query = query.gte("fecha", sp.desde);
-  if (sp.hasta) query = query.lte("fecha", sp.hasta);
-  if (sp.q) {
-    if (tipo === "ingreso") {
-      query = query.or(`concepto.ilike.%${sp.q}%,pagador.ilike.%${sp.q}%`);
-    } else {
-      const { data: terceros_q } = await supabase
-        .from("terceros")
-        .select("id")
-        .or(`nombre.ilike.%${sp.q}%,apellido.ilike.%${sp.q}%`);
-      const idsTerceros_q = (terceros_q ?? []).map((t) => t.id);
-      const condiciones = [
-        `concepto.ilike.%${sp.q}%`,
-        `beneficiario.ilike.%${sp.q}%`,
-        `referencia->>numero_egreso.ilike.%${sp.q}%`,
-        `referencia->>cheque.ilike.%${sp.q}%`,
-        `referencia->>comprobante.ilike.%${sp.q}%`,
-        `referencia->>referencia.ilike.%${sp.q}%`,
-      ];
-      if (idsTerceros_q.length) condiciones.push(`tercero_id.in.(${idsTerceros_q.join(",")})`);
-      query = query.or(condiciones.join(","));
+  if (idsSeleccionados.length) {
+    query = query.in("id", idsSeleccionados);
+  } else {
+    if (sp.cuenta) query = query.eq("cuenta_id", sp.cuenta);
+    if (sp.tercero) query = query.eq("tercero_id", sp.tercero);
+    if (sp.tipoMov) query = query.eq("tipo_movimiento_id", sp.tipoMov);
+    // Los anulados nunca se imprimen (ver abajo), así que solo se reenvía el
+    // filtro de estado cuando pide confirmado o pendiente puntualmente.
+    if (sp.estado === "confirmado" || sp.estado === "pendiente") query = query.eq("estado", sp.estado);
+    if (sp.desde) query = query.gte("fecha", sp.desde);
+    if (sp.hasta) query = query.lte("fecha", sp.hasta);
+    if (sp.q) {
+      if (tipo === "ingreso") {
+        query = query.or(`concepto.ilike.%${sp.q}%,pagador.ilike.%${sp.q}%`);
+      } else {
+        const { data: terceros_q } = await supabase
+          .from("terceros")
+          .select("id")
+          .or(`nombre.ilike.%${sp.q}%,apellido.ilike.%${sp.q}%`);
+        const idsTerceros_q = (terceros_q ?? []).map((t) => t.id);
+        const condiciones = [
+          `concepto.ilike.%${sp.q}%`,
+          `beneficiario.ilike.%${sp.q}%`,
+          `referencia->>numero_egreso.ilike.%${sp.q}%`,
+          `referencia->>cheque.ilike.%${sp.q}%`,
+          `referencia->>comprobante.ilike.%${sp.q}%`,
+          `referencia->>referencia.ilike.%${sp.q}%`,
+        ];
+        if (idsTerceros_q.length) condiciones.push(`tercero_id.in.(${idsTerceros_q.join(",")})`);
+        query = query.or(condiciones.join(","));
+      }
     }
   }
   query = query.order("fecha", { ascending: true }).order("creado_en", { ascending: true });
@@ -108,14 +118,17 @@ export default async function ImprimirMovimientosPage({ searchParams }: { search
   }
 
   let periodo = "Todas las fechas";
-  if (sp.desde && sp.hasta) periodo = `${fmtDate(sp.desde)} al ${fmtDate(sp.hasta)}`;
+  if (idsSeleccionados.length) periodo = "Selección manual";
+  else if (sp.desde && sp.hasta) periodo = `${fmtDate(sp.desde)} al ${fmtDate(sp.hasta)}`;
   else if (sp.desde) periodo = `Desde ${fmtDate(sp.desde)}`;
   else if (sp.hasta) periodo = `Hasta ${fmtDate(sp.hasta)}`;
+
+  const volverHref = sp.volver && sp.volver.startsWith("/") ? sp.volver : `/movimientos?tipo=${tipo}`;
 
   return (
     <>
       <PrintStyles tamano="A4" />
-      <PrintActions volverHref={`/movimientos?tipo=${tipo}`} />
+      <PrintActions volverHref={volverHref} />
       <div className="hoja">
         <PrintLogo />
         <div className="hd">
