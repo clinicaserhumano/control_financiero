@@ -54,7 +54,7 @@ export default function TerceroForm({
         <form action={formAction} className="flex flex-col">
           {terceroEditando && <input type="hidden" name="id" value={terceroEditando.id} />}
           <fieldset disabled={!esAdmin} className="contents">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="field">
               <label className="flabel flabel-req" htmlFor="nombre">
                 Nombre
@@ -75,7 +75,7 @@ export default function TerceroForm({
               <input id="apellido" name="apellido" type="text" defaultValue={terceroEditando?.apellido || ""} className="finput" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="field">
               <label className="flabel" htmlFor="cedula_ruc">
                 Cédula / RUC
@@ -103,7 +103,7 @@ export default function TerceroForm({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="field">
               <label className="flabel flabel-req" htmlFor="tipo">
                 Grupo
@@ -132,7 +132,7 @@ export default function TerceroForm({
           </div>
 
           {esServicios && (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="field">
                 <label className="flabel flabel-req" htmlFor="sueldo">
                   Sueldo mensual (USD)
@@ -193,27 +193,29 @@ export default function TerceroForm({
               <input type="hidden" name="horario" value={JSON.stringify(horario)} />
               <div className="flex flex-col gap-1.5">
                 {horario.map((h, i) => (
-                  <div key={h.dia} className="grid grid-cols-[20px_84px_1fr_1fr] gap-2 items-center">
-                    <input
-                      type="checkbox"
-                      checked={diasMarcados[i]}
-                      onChange={(e) => marcarDia(i, e.target.checked)}
-                      title={`Se trabaja el ${h.dia}`}
-                    />
-                    <span className={"text-[12.5px] font-semibold " + (diasMarcados[i] ? "" : "text-muted")}>{h.dia}</span>
+                  <div key={h.dia} className="flex flex-wrap sm:grid sm:grid-cols-[20px_84px_1fr_1fr] gap-2 items-center">
+                    <div className="w-full sm:contents flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={diasMarcados[i]}
+                        onChange={(e) => marcarDia(i, e.target.checked)}
+                        title={`Se trabaja el ${h.dia}`}
+                      />
+                      <span className={"text-[12.5px] font-semibold " + (diasMarcados[i] ? "" : "text-muted")}>{h.dia}</span>
+                    </div>
                     <input
                       type="time"
                       disabled={!diasMarcados[i]}
                       value={h.entrada}
                       onChange={(e) => setHorario((prev) => prev.map((x, j) => (j === i ? { ...x, entrada: e.target.value } : x)))}
-                      className="finput disabled:opacity-40"
+                      className="finput disabled:opacity-40 flex-1 min-w-[110px] sm:min-w-0 sm:flex-none"
                     />
                     <input
                       type="time"
                       disabled={!diasMarcados[i]}
                       value={h.salida}
                       onChange={(e) => setHorario((prev) => prev.map((x, j) => (j === i ? { ...x, salida: e.target.value } : x)))}
-                      className="finput disabled:opacity-40"
+                      className="finput disabled:opacity-40 flex-1 min-w-[110px] sm:min-w-0 sm:flex-none"
                     />
                   </div>
                 ))}

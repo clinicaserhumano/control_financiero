@@ -57,7 +57,7 @@ export default function Campanita() {
         )}
       </button>
       {abierta && (
-        <div className="absolute right-0 mt-2 w-[300px] bg-[var(--color-surface)] text-ink rounded-[10px] shadow-lg border border-border z-50 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-[300px] max-w-[85vw] bg-[var(--color-surface)] text-ink rounded-[10px] shadow-lg border border-border z-50 overflow-hidden">
           <div className="px-3.5 py-2.5 border-b border-border font-bold text-[13px]">Notificaciones</div>
           <div className="max-h-[320px] overflow-y-auto">
             {totalAvisos === 0 ? (

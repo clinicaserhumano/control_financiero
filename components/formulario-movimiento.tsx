@@ -177,7 +177,7 @@ export default function FormularioMovimiento(props: Props) {
 
           {props.modo === "crear" && (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="field">
                   <label className="flabel flabel-req" htmlFor="fecha">
                     Fecha
@@ -325,7 +325,7 @@ export default function FormularioMovimiento(props: Props) {
           )}
 
           {requiereCuentaYFecha && (
-            <div className={requiereCuenta ? "grid grid-cols-2 gap-3" : ""}>
+            <div className={requiereCuenta ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : ""}>
               {requiereCuenta && (
                 <div className="field">
                   <label className="flabel flabel-req" htmlFor="cuenta_id">
@@ -355,7 +355,7 @@ export default function FormularioMovimiento(props: Props) {
 
           {mostrarDescuento && (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="field">
                   <label className="flabel" htmlFor="descuento">
                     Descuento (USD)

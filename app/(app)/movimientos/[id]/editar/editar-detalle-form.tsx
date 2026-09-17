@@ -58,7 +58,7 @@ export default function EditarDetalleForm({ movimiento, cuenta, quien, camposExt
                 <input type="text" value={quien} readOnly className="finput opacity-60" />
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="field">
                 <label className="flabel">Fecha</label>
                 <input type="text" value={fmtDate(movimiento.fecha)} readOnly className="finput opacity-60" />

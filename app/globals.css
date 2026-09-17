@@ -84,6 +84,10 @@ html {
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
+html, body {
+  overflow-x: hidden;
+}
+
 body {
   background: var(--color-paper);
   color: var(--color-ink);
@@ -407,5 +411,22 @@ body {
 @media print {
   body {
     background: #fff;
+  }
+}
+
+/* Ajustes visuales para pantallas angostas (móvil): mismos componentes, solo
+   menos relleno/tamaño para que respiren en ~360-390px de ancho. */
+@media (max-width: 640px) {
+  .card-h {
+    padding: 12px 14px;
+  }
+  .card-b {
+    padding: 14px;
+  }
+  .stat {
+    padding: 12px 14px;
+  }
+  .stat .val {
+    font-size: 19px;
   }
 }

@@ -104,7 +104,7 @@ export default function AsignarDiaPago({ terceroId, diaPagoInicial }: { terceroI
         <div className="text-[11px] text-muted mt-1 text-right">{formatearDiaPago(diaPagoInicial)}</div>
       )}
       {abierto && (
-        <div className="absolute right-0 z-10 border border-border rounded-[10px] p-3 mt-2 bg-[var(--color-surface)] shadow-lg w-[280px]">
+        <div className="absolute right-0 z-10 border border-border rounded-[10px] p-3 mt-2 bg-[var(--color-surface)] shadow-lg w-[280px] max-w-[85vw]">
           <div className="field">
             <label className="flabel">Frecuencia</label>
             <select className="finput" value={frecuencia} onChange={(e) => cambiarFrecuencia(e.target.value as DiaPago["frecuencia"])}>

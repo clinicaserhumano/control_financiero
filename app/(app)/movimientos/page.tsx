@@ -197,7 +197,7 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
         />
 
         <div>
-          <div className="grid grid-cols-3 gap-3.5 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-4">
             <div className="stat">
               <div className="lbl">Registros en el listado</div>
               <div className="val">{lista.length}</div>

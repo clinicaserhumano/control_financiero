@@ -113,7 +113,7 @@ export default function PagarConjuntoForm({ ids, conceptoCombinado, valorTotal, 
               </select>
             </div>
 
-            <div className={requiereCuenta ? "grid grid-cols-2 gap-3" : ""}>
+            <div className={requiereCuenta ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : ""}>
               {requiereCuenta && (
                 <div className="field">
                   <label className="flabel flabel-req" htmlFor="cuenta_id">
@@ -140,7 +140,7 @@ export default function PagarConjuntoForm({ ids, conceptoCombinado, valorTotal, 
 
             {tipoSeleccionado && <CamposExtraFields campos={tipoSeleccionado.campos_extra} />}
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="field">
                 <label className="flabel" htmlFor="descuento">
                   Descuento (USD)

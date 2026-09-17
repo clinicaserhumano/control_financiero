@@ -48,7 +48,7 @@ export default function CuentaForm({ cuentaEditando }: { cuentaEditando: Cuenta 
                 className="finput"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="field">
                 <label className="flabel flabel-req" htmlFor="banco">
                   Banco
@@ -87,7 +87,7 @@ export default function CuentaForm({ cuentaEditando }: { cuentaEditando: Cuenta 
                 className="finput"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="field">
                 <label className="flabel" htmlFor="elaborado">
                   Elaborado por
