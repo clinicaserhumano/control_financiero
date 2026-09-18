@@ -19,13 +19,17 @@ export default async function PagarConjuntoPage({
   const supabase = await createClient();
   const { data: movimientos } = await supabase
     .from("movimientos_financieros")
-    .select("*, tercero:terceros(nombre,apellido)")
+    .select("*, tercero:terceros(nombre,apellido,tipo,sueldo)")
     .in("id", ids);
 
   if (!movimientos || movimientos.length !== ids.length) notFound();
 
   const tipo = movimientos[0].tipo as "ingreso" | "egreso";
   const yaNoValido = movimientos.some((m) => m.estado !== "pendiente");
+  // Solo se ofrece IVA si TODOS los movimientos combinados son de Personal
+  // por Servicios prestados — mezclar con proveedores/afiliados no debería
+  // recargar 15% a algo que no corresponde.
+  const esServiciosPrestados = movimientos.every((m) => m.tercero?.tipo === "empleado" && m.tercero?.sueldo != null);
 
   const [{ data: cuentas }, { data: tiposMovimiento }] = await Promise.all([
     supabase.from("cuentas").select("*").order("empresa"),
@@ -57,6 +61,7 @@ export default async function PagarConjuntoPage({
             nombres={nombres as string[]}
             tiposMovimiento={(tiposMovimiento ?? []) as TipoMovimiento[]}
             cuentas={(cuentas ?? []) as Cuenta[]}
+            esServiciosPrestados={esServiciosPrestados}
             redirectTo={redirectTo}
           />
         </div>

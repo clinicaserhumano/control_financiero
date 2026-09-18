@@ -541,7 +541,9 @@ export default function AyudaPage() {
           <p>
             Al registrar el pago de Servicios prestados (y solo ahí, no en Proveedores ni Personal afiliado)
             aparece la casilla <b>Incluir IVA (15%)</b>: al marcarla, suma el 15% al valor a pagar y agrega{" "}
-            <b>&quot;+ IVA&quot;</b> al concepto automáticamente.
+            <b>&quot;+ IVA&quot;</b> al concepto automáticamente. También aparece al combinar varias semanas en un
+            solo pago (siempre que todas sean de la misma persona de Servicios prestados) — ahí el 15% se calcula
+            sobre cada semana por separado, no sobre el total ya sumado, así cada una queda con su valor real.
           </p>
         </Seccion>
 

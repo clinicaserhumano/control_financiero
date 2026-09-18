@@ -241,21 +241,25 @@ export async function confirmarPagoConjunto(_prev: ConfirmarConjuntoState, formD
 
   const { data: originales } = await supabase
     .from("movimientos_financieros")
-    .select("id,tercero_id,monto,estado")
+    .select("id,tercero_id,monto,estado,concepto")
     .in("id", ids);
   if (!originales || originales.length !== ids.length) return { error: "Alguno de los movimientos ya no existe." };
   if (originales.some((m) => m.estado !== "pendiente")) {
     return { error: "Alguno de los movimientos seleccionados ya no está pendiente — actualiza la página." };
   }
 
-  const totalBase = originales.reduce((s, m) => s + Number(m.monto), 0);
+  // El IVA se calcula por movimiento (cada cargo + su 15%) y no sobre el
+  // total ya sumado — matemáticamente da lo mismo, pero así cada fila queda
+  // con su propio monto real en la base, no uno solo inflado con todo el IVA.
+  const montosConIVA = originales.map((m) => aplicarIVA(formData, Number(m.monto)));
+  const totalBase = montosConIVA.reduce((s, m) => s + m, 0);
   const r = leerDescuento(formData, totalBase);
   if (!r.ok) return { error: r.error };
 
   for (let i = 0; i < originales.length; i++) {
     const m = originales[i];
     const esUltimo = i === originales.length - 1;
-    const montoFinal = esUltimo && r.descuento ? Number(m.monto) - r.descuento : Number(m.monto);
+    const montoFinal = esUltimo && r.descuento ? montosConIVA[i] - r.descuento : montosConIVA[i];
     const { error } = await supabase
       .from("movimientos_financieros")
       .update({
@@ -265,6 +269,7 @@ export async function confirmarPagoConjunto(_prev: ConfirmarConjuntoState, formD
         tipo_movimiento_id: tipoMovimientoId,
         referencia,
         monto: montoFinal,
+        concepto: conSufijoIVA(formData, m.concepto),
         descuento: esUltimo ? r.descuento : null,
         observaciones: esUltimo ? r.observaciones : null,
       })

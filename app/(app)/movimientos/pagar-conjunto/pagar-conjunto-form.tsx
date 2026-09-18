@@ -41,21 +41,35 @@ type Props = {
   nombres: string[];
   tiposMovimiento: TipoMovimiento[];
   cuentas: Cuenta[];
+  esServiciosPrestados?: boolean;
   redirectTo: string;
 };
 
-export default function PagarConjuntoForm({ ids, conceptoCombinado, valorTotal, cantidad, nombres, tiposMovimiento, cuentas, redirectTo }: Props) {
+export default function PagarConjuntoForm({
+  ids,
+  conceptoCombinado,
+  valorTotal,
+  cantidad,
+  nombres,
+  tiposMovimiento,
+  cuentas,
+  esServiciosPrestados,
+  redirectTo,
+}: Props) {
   const router = useRouter();
   const esAdmin = useEsAdmin();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [tipoMovimientoId, setTipoMovimientoId] = useState("");
   const [descuento, setDescuento] = useState("");
+  const [incluirIVA, setIncluirIVA] = useState(false);
 
   const tipoSeleccionado = useMemo(() => tiposMovimiento.find((t) => t.id === tipoMovimientoId) ?? null, [tiposMovimiento, tipoMovimientoId]);
   const requiereCuenta = tipoSeleccionado?.requiere_cuenta ?? true;
-  const valorAPagar = Math.max(0, valorTotal - (parseFloat(descuento) || 0));
+  const ivaValor = esServiciosPrestados && incluirIVA ? Math.round(valorTotal * 0.15 * 100) / 100 : 0;
+  const valorAPagar = Math.max(0, valorTotal + ivaValor - (parseFloat(descuento) || 0));
   const letras = numeroALetras(valorAPagar);
+  const conceptoMostrado = incluirIVA ? `${conceptoCombinado} + IVA` : conceptoCombinado;
 
   function enviar(formData: FormData) {
     ids.forEach((id) => formData.append("movimiento_ids", id));
@@ -85,7 +99,7 @@ export default function PagarConjuntoForm({ ids, conceptoCombinado, valorTotal, 
                 <b>{nombres.join(", ")}</b>
               </div>
             )}
-            <div className="text-[11.5px] text-muted">{conceptoCombinado}</div>
+            <div className="text-[11.5px] text-muted">{conceptoMostrado}</div>
             <div className="mt-1">
               Valor combinado: <b>{money(valorTotal)}</b>
             </div>
@@ -140,6 +154,24 @@ export default function PagarConjuntoForm({ ids, conceptoCombinado, valorTotal, 
 
             {tipoSeleccionado && <CamposExtraFields campos={tipoSeleccionado.campos_extra} />}
 
+            {esServiciosPrestados && (
+              <div className="field">
+                <label className="flex items-center gap-2 cursor-pointer text-[12.5px] font-semibold text-ink">
+                  <input
+                    type="checkbox"
+                    name="incluir_iva"
+                    value="si"
+                    checked={incluirIVA}
+                    onChange={(e) => setIncluirIVA(e.target.checked)}
+                  />
+                  Incluir IVA (15%)
+                </label>
+                <div className="fhint">
+                  Suma el 15% de IVA al total combinado y lo agrega al concepto de cada movimiento.
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="field">
                 <label className="flabel" htmlFor="descuento">
@@ -164,6 +196,20 @@ export default function PagarConjuntoForm({ ids, conceptoCombinado, valorTotal, 
                 </label>
                 <input id="observaciones" name="observaciones" type="text" placeholder="Motivo del descuento…" className="finput" />
               </div>
+            </div>
+
+            <div className="letras-box mb-3.5">
+              Valor combinado: <b>{money(valorTotal)}</b>
+              {ivaValor > 0 && (
+                <>
+                  {" "}· IVA (15%): <b>{money(ivaValor)}</b>
+                </>
+              )}
+              {parseFloat(descuento) > 0 && (
+                <>
+                  {" "}· Descuento: <b>{money(parseFloat(descuento) || 0)}</b>
+                </>
+              )}
             </div>
 
             <div className="letras-box mono mb-3.5">
