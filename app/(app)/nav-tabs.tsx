@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEsAdmin } from "@/lib/auth/role-context";
 
 const TABS = [
+  { href: "/dashboard", label: "Dashboard", match: (p: string) => p.startsWith("/dashboard") },
   { href: "/cuentas", label: "Cuentas", match: (p: string) => p.startsWith("/cuentas") && !p.startsWith("/cuentas-por-pagar") },
   { href: "/terceros", label: "Personal", match: (p: string) => p.startsWith("/terceros") },
   { href: "/movimientos?tipo=ingreso", label: "Ingresos", match: (p: string, q: string) => p.startsWith("/movimientos") && q === "ingreso" },

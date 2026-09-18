@@ -2,6 +2,7 @@ const SECCIONES = [
   { id: "bienvenida", titulo: "Bienvenida" },
   { id: "entrar", titulo: "Cómo entrar" },
   { id: "pantalla", titulo: "Partes de la pantalla" },
+  { id: "dashboard", titulo: "Dashboard" },
   { id: "cuentas", titulo: "Cuentas bancarias" },
   { id: "ingresos", titulo: "Registrar un ingreso" },
   { id: "egresos", titulo: "Registrar un egreso" },
@@ -142,6 +143,36 @@ export default function AyudaPage() {
             </li>
             <li>
               <b>Cómo usar (esquina derecha, en naranja):</b> este manual, siempre a un clic de distancia.
+            </li>
+          </ul>
+        </Seccion>
+
+        <Seccion id="dashboard" titulo="Dashboard">
+          <p>
+            La primera pestaña es un resumen visual de solo lectura — no registra ni cambia nada, solo grafica lo
+            que ya existe en Movimientos, Cuentas y Cuentas por Pagar.
+          </p>
+          <ul className="list-disc pl-5 flex flex-col gap-1">
+            <li>
+              Las 5 tarjetas de arriba (ingresos y egresos del mes, saldo neto, pendiente por pagar, saldo en
+              cuentas) siempre reflejan el estado real de <b>hoy</b>, sin importar el filtro de fechas.
+            </li>
+            <li>
+              El filtro <b>Desde/Hasta</b> (por defecto, el año en curso) afecta el gráfico de tendencia mensual y
+              los de categoría, forma de pago y top de beneficiarios.
+            </li>
+            <li>
+              <b>Pendientes por antigüedad</b> es la excepción: no depende del filtro, siempre muestra todo lo que
+              sigue pendiente hoy agrupado por cuántos días lleva esperando pago — útil para saber qué pagar primero.
+            </li>
+            <li>
+              Pasa el mouse sobre cualquier barra o porción del gráfico de tendencia para ver el valor exacto. En
+              las tarjetas de categoría, forma de pago y antigüedad puedes cambiar entre <b>▤ Barras</b> y{" "}
+              <b>◔ Pastel</b> (el Top 10 se queda solo en barras: con 10 nombres, una torta no se lee bien).
+            </li>
+            <li>
+              Cada tarjeta con gráfico trae su propio botón <b>⬇️ Descargar CSV</b>, con los mismos datos que ves
+              graficados — se abre directo en Excel o Google Sheets.
             </li>
           </ul>
         </Seccion>
@@ -372,6 +403,10 @@ export default function AyudaPage() {
               <b>🖨️ Imprimir seleccionados</b> o <b>Anular seleccionados</b> desde la barra que aparece abajo.
             </li>
             <li>
+              El botón <b>🖨️ Imprimir rango (A4)</b>, arriba de la tabla, imprime todo lo que está filtrado en ese
+              momento; junto a él, <b>⬇️ Descargar CSV</b> exporta esa misma lista filtrada para Excel o Sheets.
+            </li>
+            <li>
               Un movimiento anulado sale con la <b>fila atenuada en gris</b> en las listas, y ya no tiene botón
               Imprimir (no tiene sentido imprimir un comprobante de algo que se anuló).
             </li>
@@ -503,6 +538,11 @@ export default function AyudaPage() {
             cargo (una sola cuenta por pagar) en vez de una por semana — útil para saldar todo de una vez con un
             solo cheque.
           </p>
+          <p>
+            Al registrar el pago de Servicios prestados (y solo ahí, no en Proveedores ni Personal afiliado)
+            aparece la casilla <b>Incluir IVA (15%)</b>: al marcarla, suma el 15% al valor a pagar y agrega{" "}
+            <b>&quot;+ IVA&quot;</b> al concepto automáticamente.
+          </p>
         </Seccion>
 
         <Seccion id="estado-cuenta" titulo="Estado de cuenta de una persona">
@@ -562,6 +602,10 @@ export default function AyudaPage() {
               corto con únicamente lo que esa persona debe cobrar, sin el historial de lo ya pagado.
             </li>
             <li>Imprimir el listado completo.</li>
+            <li>
+              El botón <b>⬇️ Descargar CSV</b> (junto a Imprimir) exporta lo que está filtrado en ese momento, listo
+              para abrir en Excel o Google Sheets.
+            </li>
           </ul>
           <Tip>
             Si algo aparece aquí como pendiente pero en realidad ya se pagó por otro lado (un duplicado de
@@ -599,7 +643,8 @@ export default function AyudaPage() {
             <b>Generar</b>. La tabla completa aparece <b>ahí mismo en la pantalla</b> — ya no hace falta imprimir
             solo para ver los datos. El botón grande <b>🖨️ Imprimir reporte</b>, justo arriba de la tabla, abre la
             versión lista para imprimir o guardar como PDF, con el mismo contenido que ves en pantalla, el logo de
-            la clínica arriba a la izquierda y quién generó el documento al pie de la página.
+            la clínica arriba a la izquierda y quién generó el documento al pie de la página. Junto a ese botón,{" "}
+            <b>⬇️ Descargar CSV</b> exporta la misma tabla para abrir en Excel o Google Sheets.
           </p>
           <p>
             En <b>Por cuenta</b> y <b>Por Personal</b>, el rango Desde/Hasta filtra qué filas se muestran e

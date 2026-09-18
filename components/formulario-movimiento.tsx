@@ -43,6 +43,7 @@ type Props =
       terceros?: Pick<Tercero, "id" | "nombre" | "apellido">[];
       terceroFijo?: Pick<Tercero, "id" | "nombre" | "apellido">;
       pagadoresHistoricos?: string[];
+      esServiciosPrestados?: boolean;
       redirectTo: string;
     }
   | {
@@ -52,6 +53,7 @@ type Props =
       cuentas: Cuenta[];
       movimiento: { id: string; monto: number; fecha: string; concepto: string | null };
       terceroNombre?: string;
+      esServiciosPrestados?: boolean;
       redirectTo: string;
     };
 
@@ -93,6 +95,19 @@ export default function FormularioMovimiento(props: Props) {
   const [confirmarAhora, setConfirmarAhora] = useState(true);
   const [descuento, setDescuento] = useState("");
   const [razonEgreso, setRazonEgreso] = useState("");
+  const [incluirIVA, setIncluirIVA] = useState(false);
+  const [concepto, setConcepto] = useState(props.modo === "confirmar" ? props.movimiento.concepto ?? "" : "");
+
+  // Al marcar/desmarcar "Incluir IVA" se agrega o quita el sufijo "+ IVA" del
+  // concepto automáticamente, para que quede visible en el comprobante sin
+  // que la persona tenga que escribirlo a mano.
+  function alternarIVA(marcado: boolean) {
+    setIncluirIVA(marcado);
+    setConcepto((c) => {
+      const sinSufijo = c.replace(/\s*\+\s*iva\s*$/i, "").trimEnd();
+      return marcado ? (sinSufijo ? `${sinSufijo} + IVA` : "+ IVA") : sinSufijo;
+    });
+  }
 
   const letras = (() => {
     const v = parseFloat(monto);
@@ -109,8 +124,13 @@ export default function FormularioMovimiento(props: Props) {
   // proveedor, servicios prestados o personal afiliado): confirmando un
   // pendiente, o creando uno que se paga de inmediato.
   const mostrarDescuento = esEgreso && (props.modo === "confirmar" || confirmarAhora);
+  // El IVA solo aplica a pagos de Personal por Servicios prestados (bitácora
+  // por horas) — cada fila nueva de tipos_movimiento sigue sin tocar esto,
+  // porque no es una forma de pago sino un recargo sobre el valor a pagar.
+  const mostrarIVA = mostrarDescuento && !!props.esServiciosPrestados;
   const montoBase = props.modo === "confirmar" ? props.movimiento.monto : parseFloat(monto) || 0;
-  const valorAPagar = Math.max(0, montoBase - (parseFloat(descuento) || 0));
+  const ivaValor = mostrarIVA && incluirIVA ? Math.round(montoBase * 0.15 * 100) / 100 : 0;
+  const valorAPagar = Math.max(0, montoBase + ivaValor - (parseFloat(descuento) || 0));
   const esAdmin = useEsAdmin();
 
   return (
@@ -353,6 +373,22 @@ export default function FormularioMovimiento(props: Props) {
 
           {tipoSeleccionado && <CamposExtraFields campos={tipoSeleccionado.campos_extra} />}
 
+          {mostrarIVA && (
+            <div className="field">
+              <label className="flex items-center gap-2 cursor-pointer text-[12.5px] font-semibold text-ink">
+                <input
+                  type="checkbox"
+                  name="incluir_iva"
+                  value="si"
+                  checked={incluirIVA}
+                  onChange={(e) => alternarIVA(e.target.checked)}
+                />
+                Incluir IVA (15%)
+              </label>
+              <div className="fhint">Suma el 15% de IVA al valor a pagar y lo agrega al concepto.</div>
+            </div>
+          )}
+
           {mostrarDescuento && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -386,10 +422,20 @@ export default function FormularioMovimiento(props: Props) {
                   />
                 </div>
               </div>
-              {parseFloat(descuento) > 0 && (
+              {(parseFloat(descuento) > 0 || ivaValor > 0) && (
                 <div className="letras-box mb-3.5">
-                  Valor original: <b>{money(montoBase)}</b> · Descuento: <b>{money(parseFloat(descuento) || 0)}</b> · Valor a
-                  pagar: <b>{money(valorAPagar)}</b>
+                  Valor original: <b>{money(montoBase)}</b>
+                  {ivaValor > 0 && (
+                    <>
+                      {" "}· IVA (15%): <b>{money(ivaValor)}</b>
+                    </>
+                  )}
+                  {parseFloat(descuento) > 0 && (
+                    <>
+                      {" "}· Descuento: <b>{money(parseFloat(descuento) || 0)}</b>
+                    </>
+                  )}{" "}
+                  · Valor a pagar: <b>{money(valorAPagar)}</b>
                 </div>
               )}
             </>
@@ -403,7 +449,8 @@ export default function FormularioMovimiento(props: Props) {
               id="concepto"
               name="concepto"
               type="text"
-              defaultValue={props.modo === "confirmar" ? props.movimiento.concepto ?? "" : ""}
+              value={concepto}
+              onChange={(e) => setConcepto(e.target.value)}
               className="finput"
             />
           </div>

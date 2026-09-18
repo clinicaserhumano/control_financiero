@@ -14,6 +14,7 @@ import { TERCERO_TIPO_LABEL, nombreCompleto } from "@/lib/terceros";
 import type { Cuenta, MovimientoFinanciero, Tercero } from "@/lib/types";
 import SeleccionarHorarios from "./seleccionar-horarios";
 import InfoBoton from "@/components/ayuda/info-boton";
+import BotonDescargarCSV from "@/components/boton-descargar-csv";
 
 type ModoReporte = "cuenta" | "tercero" | "general" | "horarios";
 
@@ -203,6 +204,74 @@ export default async function ReportesPage({
     modo === "general" ? "/imprimir/general" : sp.id && `/imprimir/${modo === "cuenta" ? "cuentas" : "terceros"}/${sp.id}`;
   const mostrarResumen = modo === "general" || (sp.id && resumen);
 
+  // ---- Filas/columnas para el botón de descargar CSV, según el modo ----
+  const csv =
+    modo === "cuenta"
+      ? {
+          nombreArchivo: `reporte-cuenta_${cuentaSeleccionada?.numero || sp.id}_${sp.desde || "todo"}_a_${sp.hasta || "hoy"}`,
+          columnas: [
+            { clave: "numero", etiqueta: "N°" },
+            { clave: "fecha", etiqueta: "Fecha" },
+            { clave: "movimiento", etiqueta: "Movimiento" },
+            { clave: "detalle", etiqueta: "Detalle" },
+            { clave: "referencia", etiqueta: "Cheque / Ref." },
+            { clave: "ingreso", etiqueta: "Ingreso" },
+            { clave: "egreso", etiqueta: "Egreso" },
+            { clave: "saldo", etiqueta: "Saldo" },
+          ],
+          filas: filasCuenta.map((m) => ({
+            numero: m.tipo === "egreso" ? numerosEgresoCuenta.get(m.id) ?? "" : "",
+            fecha: fmtDate(m.fecha),
+            movimiento: m.tipo_movimiento?.nombre || (m.tipo === "ingreso" ? "Ingreso" : "Egreso"),
+            detalle: [m.tercero ? nombreCompleto(m.tercero) : null, m.concepto].filter(Boolean).join(" · "),
+            referencia: Object.values(m.referencia || {}).filter(Boolean).join(" · "),
+            ingreso: m.tipo === "ingreso" ? m.monto.toFixed(2) : "",
+            egreso: m.tipo === "egreso" ? m.monto.toFixed(2) : "",
+            saldo: m.saldoAcumulado.toFixed(2),
+          })),
+        }
+      : modo === "tercero"
+        ? {
+            nombreArchivo: `reporte-personal_${terceroSeleccionado ? nombreCompleto(terceroSeleccionado) : sp.id}_${sp.desde || "todo"}_a_${sp.hasta || "hoy"}`,
+            columnas: [
+              { clave: "fecha", etiqueta: "Fecha" },
+              { clave: "concepto", etiqueta: "Concepto" },
+              { clave: "valor", etiqueta: "Valor" },
+              { clave: "abono", etiqueta: "Abono" },
+              { clave: "saldo", etiqueta: "Saldo" },
+              { clave: "obs", etiqueta: "Observación" },
+            ],
+            filas: filasTercero.map((f) => ({
+              fecha: fmtDate(f.fecha),
+              concepto: f.concepto,
+              valor: f.valor != null ? f.valor.toFixed(2) : "",
+              abono: f.abono != null ? f.abono.toFixed(2) : "",
+              saldo: f.saldo.toFixed(2),
+              obs: f.obs,
+            })),
+          }
+        : {
+            nombreArchivo: `reporte-general_${sp.desde || "todo"}_a_${sp.hasta || "hoy"}`,
+            columnas: [
+              { clave: "cuenta", etiqueta: "Cuenta" },
+              { clave: "fecha", etiqueta: "Fecha" },
+              { clave: "direccion", etiqueta: "Dirección" },
+              { clave: "concepto", etiqueta: "Concepto" },
+              { clave: "estado", etiqueta: "Estado" },
+              { clave: "valor", etiqueta: "Valor" },
+            ],
+            filas: filasPorCuenta.flatMap((f) =>
+              f.movimientos.map((m) => ({
+                cuenta: `${f.cuenta.empresa} — ${f.cuenta.banco} ${f.cuenta.numero}`,
+                fecha: fmtDate(m.fecha),
+                direccion: m.tipo === "ingreso" ? "Ingreso" : "Egreso",
+                concepto: m.concepto || m.tipo_movimiento?.nombre || "",
+                estado: m.estado === "confirmado" ? "Confirmado" : "Pendiente",
+                valor: Number(m.monto).toFixed(2),
+              }))
+            ),
+          };
+
   return (
     <div>
       <div className="flex items-start gap-2 -mt-1.5 mb-[18px]">
@@ -320,6 +389,9 @@ export default async function ReportesPage({
                   >
                     🖨️ Imprimir reporte
                   </Link>
+                  <BotonDescargarCSV nombreArchivo={csv.nombreArchivo} columnas={csv.columnas} filas={csv.filas} className="btn-ghost">
+                    ⬇️ Descargar CSV
+                  </BotonDescargarCSV>
                   {modo === "tercero" && sp.id && (
                     <Link href={`/imprimir/terceros/${sp.id}/pendiente`} className="btn-ghost" style={{ fontSize: 15, padding: "13px 22px" }}>
                       🖨️ Imprimir solo el saldo pendiente

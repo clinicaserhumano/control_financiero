@@ -56,6 +56,24 @@ function leerDescuento(formData: FormData, montoBase: number): ResultadoDescuent
   return { ok: true, montoFinal: Math.round((montoBase - descuento) * 100) / 100, descuento, observaciones };
 }
 
+// IVA (15%) sobre pagos a Personal por Servicios prestados: opcional, se
+// suma al valor original ANTES de aplicar un posible descuento. El check del
+// formulario (<FormularioMovimiento>) solo lo muestra para esos pagos, pero
+// el cálculo real vive aquí — nunca se confía en un monto final armado en
+// el cliente.
+function aplicarIVA(formData: FormData, montoBase: number): number {
+  if (formData.get("incluir_iva") !== "si") return montoBase;
+  return Math.round(montoBase * 1.15 * 100) / 100;
+}
+
+// Si se marcó incluir IVA, asegura el sufijo "+ IVA" en el concepto aunque
+// el cliente no lo haya agregado (JS deshabilitado, envío manual, etc.) —
+// idempotente: no lo duplica si ya viene incluido.
+function conSufijoIVA(formData: FormData, concepto: string | null): string | null {
+  if (formData.get("incluir_iva") !== "si" || !concepto) return concepto;
+  return /\+\s*iva\s*$/i.test(concepto) ? concepto : `${concepto} + IVA`;
+}
+
 function revalidarTodo(cuentaId: string | null, terceroId: string | null) {
   revalidatePath("/movimientos");
   revalidatePath("/cuentas");
@@ -78,7 +96,7 @@ export async function crearMovimiento(_prev: MovimientoFormState, formData: Form
   const razonEgreso = razonRadio === "Otros" ? razonOtros || null : razonRadio || null;
   const monto = parseFloat(String(formData.get("monto") || ""));
   const fecha = String(formData.get("fecha") || "");
-  const concepto = String(formData.get("concepto") || "").trim() || null;
+  const concepto = conSufijoIVA(formData, String(formData.get("concepto") || "").trim() || null);
   // Los ingresos siempre se registran ya cobrados; los egresos pueden quedar pendientes.
   const confirmarAhora = tipo === "ingreso" || String(formData.get("confirmar_ahora") || "si") === "si";
   const cuentaId = String(formData.get("cuenta_id") || "") || null;
@@ -101,7 +119,7 @@ export async function crearMovimiento(_prev: MovimientoFormState, formData: Form
   let descuento: number | null = null;
   let observaciones: string | null = null;
   if (tipo === "egreso" && confirmarAhora) {
-    const r = leerDescuento(formData, monto);
+    const r = leerDescuento(formData, aplicarIVA(formData, monto));
     if (!r.ok) return { error: r.error };
     montoFinal = r.montoFinal;
     descuento = r.descuento;
@@ -139,7 +157,7 @@ export async function confirmarPago(_prev: ConfirmarPagoState, formData: FormDat
   const tipoMovimientoId = String(formData.get("tipo_movimiento_id") || "");
   const cuentaId = String(formData.get("cuenta_id") || "") || null;
   const fechaPago = String(formData.get("fecha_pago") || "");
-  const concepto = String(formData.get("concepto") || "").trim() || null;
+  const concepto = conSufijoIVA(formData, String(formData.get("concepto") || "").trim() || null);
   const redirectTo = String(formData.get("redirect_to") || "/movimientos");
 
   if (!movimientoId) return { error: "Movimiento no encontrado." };
@@ -164,7 +182,7 @@ export async function confirmarPago(_prev: ConfirmarPagoState, formData: FormDat
   let descuento: number | null = null;
   let observaciones: string | null = null;
   if (original.tipo === "egreso") {
-    const r = leerDescuento(formData, original.monto);
+    const r = leerDescuento(formData, aplicarIVA(formData, original.monto));
     if (!r.ok) return { error: r.error };
     montoFinal = r.montoFinal;
     descuento = r.descuento;

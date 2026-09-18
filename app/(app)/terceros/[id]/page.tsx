@@ -169,6 +169,7 @@ export default async function TerceroDetallePage({
             tiposMovimiento={(tiposMovimiento ?? []) as TipoMovimiento[]}
             cuentas={(cuentas ?? []) as Cuenta[]}
             terceroFijo={tercero as Tercero}
+            esServiciosPrestados={tieneBitacora}
             redirectTo={`/terceros/${id}${tieneBitacora ? "?sub=movimientos" : ""}`}
           />
 

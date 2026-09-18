@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { money, fmtDate, todayISO, addDaysISO, numerosEgresoPorCuenta } from "@/lib/calculos";
+import { nombreCompleto } from "@/lib/terceros";
 import type { Cuenta, Tercero, TipoMovimiento, MovimientoFinanciero } from "@/lib/types";
 import FormularioMovimiento from "@/components/formulario-movimiento";
 import MovimientosFiltros from "./movimientos-filtros";
 import MovimientosListaTabla from "./movimientos-lista-tabla";
 import InfoBoton from "@/components/ayuda/info-boton";
+import BotonDescargarCSV from "@/components/boton-descargar-csv";
 
 const PAGINAS_OPCIONES = ["5", "10", "50", "todos"];
 
@@ -254,6 +256,42 @@ export default async function MovimientosPage({ searchParams }: { searchParams: 
                 <Link href={`/movimientos?tipo=${tipo}&todo=1`} className="btn-ghost btn-sm">
                   Ver todo el historial
                 </Link>
+                <BotonDescargarCSV
+                  nombreArchivo={`${tipo === "ingreso" ? "ingresos" : "egresos"}_${desdeEfectivo || "todo"}_a_${hastaEfectivo || todayISO()}`}
+                  columnas={
+                    tipo === "egreso"
+                      ? [
+                          { clave: "numero", etiqueta: "N°" },
+                          { clave: "fecha", etiqueta: "Fecha" },
+                          { clave: "tipoMov", etiqueta: "Tipo" },
+                          { clave: "beneficiario", etiqueta: "Beneficiario" },
+                          { clave: "cuenta", etiqueta: "Cuenta" },
+                          { clave: "referencia", etiqueta: "Cheque / Ref." },
+                          { clave: "estado", etiqueta: "Estado" },
+                          { clave: "valor", etiqueta: "Valor" },
+                        ]
+                      : [
+                          { clave: "fecha", etiqueta: "Fecha" },
+                          { clave: "tipoMov", etiqueta: "Tipo" },
+                          { clave: "pagador", etiqueta: "Pagador" },
+                          { clave: "cuenta", etiqueta: "Cuenta" },
+                          { clave: "estado", etiqueta: "Estado" },
+                          { clave: "valor", etiqueta: "Valor" },
+                        ]
+                  }
+                  filas={lista.map((m) => ({
+                    numero: numerosEgreso.get(m.id) ?? "",
+                    fecha: fmtDate(m.fecha),
+                    tipoMov: m.tipo_movimiento?.nombre || "",
+                    beneficiario: m.tercero ? nombreCompleto(m.tercero) : m.beneficiario || "",
+                    pagador: m.pagador || "",
+                    cuenta: m.cuenta ? `${m.cuenta.banco} ${m.cuenta.numero}` : "",
+                    referencia: Object.values(m.referencia || {}).filter(Boolean).join(" · "),
+                    estado: m.estado === "confirmado" ? "Confirmado" : m.estado === "pendiente" ? "Pendiente" : "Anulado",
+                    valor: Number(m.monto || 0).toFixed(2),
+                  }))}
+                  className="btn-ghost btn-sm"
+                />
                 <Link href={construirHrefImprimir(sp, tipo, desdeEfectivo, hastaEfectivo)} className="btn-navy btn-sm ml-auto">
                   🖨️ Imprimir rango (A4)
                 </Link>

@@ -18,7 +18,7 @@ export default async function PagarMovimientoPage({
   const supabase = await createClient();
 
   const [{ data: movimiento }, { data: cuentas }] = await Promise.all([
-    supabase.from("movimientos_financieros").select("*, tercero:terceros(nombre,apellido)").eq("id", id).single(),
+    supabase.from("movimientos_financieros").select("*, tercero:terceros(nombre,apellido,tipo,sueldo)").eq("id", id).single(),
     supabase.from("cuentas").select("*").order("empresa"),
   ]);
 
@@ -41,6 +41,10 @@ export default async function PagarMovimientoPage({
     .eq("activo", true)
     .order("orden");
 
+  // "Servicios prestados" = Personal tipo 'empleado' con sueldo asignado
+  // (se liquida por bitácora de horas) — ver la misma regla en la ficha.
+  const esServiciosPrestados = movimiento.tercero?.tipo === "empleado" && movimiento.tercero?.sueldo != null;
+
   return (
     <div>
       <Link href={redirectTo} className="btn-ghost btn-sm">
@@ -54,6 +58,7 @@ export default async function PagarMovimientoPage({
           cuentas={(cuentas ?? []) as Cuenta[]}
           movimiento={{ id: movimiento.id, monto: movimiento.monto, fecha: movimiento.fecha, concepto: movimiento.concepto }}
           terceroNombre={movimiento.tercero ? nombreCompleto(movimiento.tercero) : undefined}
+          esServiciosPrestados={esServiciosPrestados}
           redirectTo={redirectTo}
         />
       </div>

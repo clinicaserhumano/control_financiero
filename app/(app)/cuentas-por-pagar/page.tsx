@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { money } from "@/lib/calculos";
+import { money, fmtDate } from "@/lib/calculos";
+import { nombreCompleto } from "@/lib/terceros";
 import TablaPendientes from "./tabla-pendientes";
 import InfoBoton from "@/components/ayuda/info-boton";
+import BotonDescargarCSV from "@/components/boton-descargar-csv";
 
 export default async function CuentasPorPagarPage({
   searchParams,
@@ -80,9 +82,25 @@ export default async function CuentasPorPagarPage({
                 Quitar fechas
               </Link>
             )}
+            <BotonDescargarCSV
+              nombreArchivo={`cuentas-por-pagar_${desde || "todas"}_a_${hasta || "hoy"}`}
+              columnas={[
+                { clave: "fecha", etiqueta: "Fecha" },
+                { clave: "personal", etiqueta: "Personal" },
+                { clave: "concepto", etiqueta: "Concepto" },
+                { clave: "valor", etiqueta: "Valor" },
+              ]}
+              filas={lista.map((p) => ({
+                fecha: fmtDate(p.fecha),
+                personal: p.tercero ? nombreCompleto(p.tercero) : "",
+                concepto: p.concepto || "",
+                valor: Number(p.monto || 0).toFixed(2),
+              }))}
+              className="btn-ghost btn-sm ml-auto"
+            />
             <Link
               href={`/imprimir/cuentas-por-pagar${desde || hasta ? `?desde=${desde || ""}&hasta=${hasta || ""}` : ""}`}
-              className="btn-navy btn-sm ml-auto"
+              className="btn-navy btn-sm"
             >
               🖨️ Imprimir
             </Link>
