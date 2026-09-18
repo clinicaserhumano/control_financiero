@@ -95,6 +95,7 @@ export default async function ImprimirTerceroPage({
       const numeroEgreso = numerosEgreso.get(m.id);
       if (numeroEgreso != null) obsPago += ` · Egreso N° ${numeroEgreso}`;
       if (m.descuento) obsPago += ` · Desc. ${money(m.descuento)}`;
+      if (m.retencion) obsPago += ` · Ret. ${money(m.retencion)}`;
       saldo -= Number(m.monto);
       filas.push({
         fecha: m.fecha_pago || m.fecha,

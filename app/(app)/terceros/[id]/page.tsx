@@ -35,6 +35,8 @@ export default async function TerceroDetallePage({
   // "Servicios prestados" = terceros tipo 'empleado' con sueldo asignado (ver lib/terceros.ts).
   const tieneBitacora = tercero.tipo === "empleado" && tercero.sueldo != null;
   const tieneHorario = tercero.tipo === "empleado" || tercero.tipo === "afiliado";
+  // Retención en la fuente: Servicios prestados y Proveedores (no Personal afiliado).
+  const permiteRetencion = tieneBitacora || tercero.tipo === "proveedor";
   const subActiva = tieneBitacora && sub !== "movimientos" ? "bitacora" : "movimientos";
 
   const [{ data: cuentas }, { data: tiposMovimiento }, { data: movimientos }, { data: semanas }] = await Promise.all([
@@ -170,6 +172,7 @@ export default async function TerceroDetallePage({
             cuentas={(cuentas ?? []) as Cuenta[]}
             terceroFijo={tercero as Tercero}
             esServiciosPrestados={tieneBitacora}
+            permiteRetencion={permiteRetencion}
             redirectTo={`/terceros/${id}${tieneBitacora ? "?sub=movimientos" : ""}`}
           />
 

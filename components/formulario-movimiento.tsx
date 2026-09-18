@@ -44,6 +44,7 @@ type Props =
       terceroFijo?: Pick<Tercero, "id" | "nombre" | "apellido">;
       pagadoresHistoricos?: string[];
       esServiciosPrestados?: boolean;
+      permiteRetencion?: boolean;
       redirectTo: string;
     }
   | {
@@ -54,6 +55,7 @@ type Props =
       movimiento: { id: string; monto: number; fecha: string; concepto: string | null };
       terceroNombre?: string;
       esServiciosPrestados?: boolean;
+      permiteRetencion?: boolean;
       redirectTo: string;
     };
 
@@ -96,6 +98,7 @@ export default function FormularioMovimiento(props: Props) {
   const [descuento, setDescuento] = useState("");
   const [razonEgreso, setRazonEgreso] = useState("");
   const [incluirIVA, setIncluirIVA] = useState(false);
+  const [retencionPct, setRetencionPct] = useState("");
   const [concepto, setConcepto] = useState(props.modo === "confirmar" ? props.movimiento.concepto ?? "" : "");
 
   // Al marcar/desmarcar "Incluir IVA" se agrega o quita el sufijo "+ IVA" del
@@ -128,9 +131,17 @@ export default function FormularioMovimiento(props: Props) {
   // por horas) — cada fila nueva de tipos_movimiento sigue sin tocar esto,
   // porque no es una forma de pago sino un recargo sobre el valor a pagar.
   const mostrarIVA = mostrarDescuento && !!props.esServiciosPrestados;
+  // La retención aplica a un conjunto más amplio que el IVA (también a
+  // Proveedores), así que es un flag aparte — nunca asumir que uno implica
+  // el otro.
+  const mostrarRetencion = mostrarDescuento && !!props.permiteRetencion;
   const montoBase = props.modo === "confirmar" ? props.movimiento.monto : parseFloat(monto) || 0;
   const ivaValor = mostrarIVA && incluirIVA ? Math.round(montoBase * 0.15 * 100) / 100 : 0;
-  const valorAPagar = Math.max(0, montoBase + ivaValor - (parseFloat(descuento) || 0));
+  // La retención se calcula sobre el valor SIN IVA, como se hace en la
+  // práctica (la base de la retención de renta no incluye el IVA).
+  const retencionPctNum = parseFloat(retencionPct) || 0;
+  const retencionValor = mostrarRetencion && retencionPctNum > 0 ? Math.round(montoBase * (retencionPctNum / 100) * 100) / 100 : 0;
+  const valorAPagar = Math.max(0, montoBase + ivaValor - (parseFloat(descuento) || 0) - retencionValor);
   const esAdmin = useEsAdmin();
 
   return (
@@ -389,6 +400,31 @@ export default function FormularioMovimiento(props: Props) {
             </div>
           )}
 
+          {mostrarRetencion && (
+            <div className="field">
+              <label className="flabel" htmlFor="retencion_pct">
+                Retención (%)
+              </label>
+              <input
+                id="retencion_pct"
+                name="retencion_pct"
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                placeholder="Ej: 10"
+                value={retencionPct}
+                onChange={(e) => setRetencionPct(e.target.value)}
+                className="finput"
+              />
+              <div className="fhint">
+                {retencionValor > 0
+                  ? `Se retiene ${money(retencionValor)} — no se le paga a la persona, la clínica lo declara al SRI.`
+                  : "Opcional — el % de retención que corresponda según el tipo de pago (pídelo a tu contador si no lo sabes)."}
+              </div>
+            </div>
+          )}
+
           {mostrarDescuento && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -422,7 +458,7 @@ export default function FormularioMovimiento(props: Props) {
                   />
                 </div>
               </div>
-              {(parseFloat(descuento) > 0 || ivaValor > 0) && (
+              {(parseFloat(descuento) > 0 || ivaValor > 0 || retencionValor > 0) && (
                 <div className="letras-box mb-3.5">
                   Valor original: <b>{money(montoBase)}</b>
                   {ivaValor > 0 && (
@@ -433,6 +469,11 @@ export default function FormularioMovimiento(props: Props) {
                   {parseFloat(descuento) > 0 && (
                     <>
                       {" "}· Descuento: <b>{money(parseFloat(descuento) || 0)}</b>
+                    </>
+                  )}
+                  {retencionValor > 0 && (
+                    <>
+                      {" "}· Retención ({retencionPctNum}%): <b>{money(retencionValor)}</b>
                     </>
                   )}{" "}
                   · Valor a pagar: <b>{money(valorAPagar)}</b>

@@ -545,6 +545,13 @@ export default function AyudaPage() {
             solo pago (siempre que todas sean de la misma persona de Servicios prestados) — ahí el 15% se calcula
             sobre cada semana por separado, no sobre el total ya sumado, así cada una queda con su valor real.
           </p>
+          <p>
+            El campo <b>Retención (%)</b> (Servicios prestados y también Proveedores) funciona distinto al
+            descuento: no es que se deba menos, es que la clínica retiene ese % como anticipo del impuesto de la
+            otra persona y lo declara aparte al SRI — por eso hay que escribir el % a mano (varía según el tipo de
+            pago; pregúntale a tu contador si no lo sabes), a diferencia del IVA que siempre es 15%. Se calcula
+            sobre el valor sin IVA, y se resta del valor a pagar junto con el descuento si también hay.
+          </p>
         </Seccion>
 
         <Seccion id="estado-cuenta" titulo="Estado de cuenta de una persona">

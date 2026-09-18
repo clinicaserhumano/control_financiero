@@ -44,6 +44,9 @@ export default async function PagarMovimientoPage({
   // "Servicios prestados" = Personal tipo 'empleado' con sueldo asignado
   // (se liquida por bitácora de horas) — ver la misma regla en la ficha.
   const esServiciosPrestados = movimiento.tercero?.tipo === "empleado" && movimiento.tercero?.sueldo != null;
+  // La retención en la fuente aplica a Servicios prestados y a Proveedores
+  // (no a Personal afiliado) — alcance más amplio que el del IVA.
+  const permiteRetencion = esServiciosPrestados || movimiento.tercero?.tipo === "proveedor";
 
   return (
     <div>
@@ -59,6 +62,7 @@ export default async function PagarMovimientoPage({
           movimiento={{ id: movimiento.id, monto: movimiento.monto, fecha: movimiento.fecha, concepto: movimiento.concepto }}
           terceroNombre={movimiento.tercero ? nombreCompleto(movimiento.tercero) : undefined}
           esServiciosPrestados={esServiciosPrestados}
+          permiteRetencion={permiteRetencion}
           redirectTo={redirectTo}
         />
       </div>

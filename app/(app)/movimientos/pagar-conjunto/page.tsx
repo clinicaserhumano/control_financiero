@@ -30,6 +30,12 @@ export default async function PagarConjuntoPage({
   // por Servicios prestados — mezclar con proveedores/afiliados no debería
   // recargar 15% a algo que no corresponde.
   const esServiciosPrestados = movimientos.every((m) => m.tercero?.tipo === "empleado" && m.tercero?.sueldo != null);
+  // La retención en la fuente admite Servicios prestados y Proveedores —
+  // igual que el pago individual, no exige que todos sean del mismo tipo
+  // entre sí, solo que cada uno califique para alguno de los dos.
+  const permiteRetencion = movimientos.every(
+    (m) => (m.tercero?.tipo === "empleado" && m.tercero?.sueldo != null) || m.tercero?.tipo === "proveedor"
+  );
 
   const [{ data: cuentas }, { data: tiposMovimiento }] = await Promise.all([
     supabase.from("cuentas").select("*").order("empresa"),
@@ -62,6 +68,7 @@ export default async function PagarConjuntoPage({
             tiposMovimiento={(tiposMovimiento ?? []) as TipoMovimiento[]}
             cuentas={(cuentas ?? []) as Cuenta[]}
             esServiciosPrestados={esServiciosPrestados}
+            permiteRetencion={permiteRetencion}
             redirectTo={redirectTo}
           />
         </div>

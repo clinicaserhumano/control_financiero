@@ -89,6 +89,12 @@ export interface MovimientoFinanciero {
   // (lo que realmente salió de la cuenta); `descuento` es el valor
   // informativo de cuánto se descontó del monto original adeudado.
   descuento: number | null;
+  // Retención en la fuente (egresos a Servicios prestados o Proveedores):
+  // a diferencia del descuento, esto no es un gasto de la clínica — es un
+  // anticipo de impuesto de la otra persona que la clínica retiene y declara
+  // aparte al SRI. También reduce `monto` (lo que sale de la cuenta), pero
+  // se guarda por separado para que quede claro en reportes y comprobantes.
+  retencion: number | null;
   observaciones: string | null;
   // Ingresos: nombre libre de quién paga (paciente/cliente). No usan
   // tercero_id porque en esta clínica siempre pagan antes de la consulta —

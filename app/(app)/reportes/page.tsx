@@ -141,6 +141,7 @@ export default async function ReportesPage({
         const numeroEgreso = numerosEgreso.get(m.id);
         if (numeroEgreso != null) obsPago += ` · Egreso N° ${numeroEgreso}`;
         if (m.descuento) obsPago += ` · Desc. ${money(m.descuento)}`;
+        if (m.retencion) obsPago += ` · Ret. ${money(m.retencion)}`;
         saldo -= Number(m.monto);
         filasTerceroCompletas.push({ fecha: m.fecha_pago || m.fecha, concepto: m.concepto || "—", valor: null, abono: Number(m.monto), saldo, obs: obsPago });
       }

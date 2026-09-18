@@ -126,6 +126,7 @@ export interface Database {
           creado_por: string | null;
           creado_en: string;
           descuento: number | null;
+          retencion: number | null;
           observaciones: string | null;
           pagador: string | null;
           beneficiario: string | null;
@@ -148,6 +149,7 @@ export interface Database {
           creado_por?: string | null;
           creado_en?: string;
           descuento?: number | null;
+          retencion?: number | null;
           observaciones?: string | null;
           pagador?: string | null;
           beneficiario?: string | null;

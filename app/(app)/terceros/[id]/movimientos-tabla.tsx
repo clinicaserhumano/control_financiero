@@ -97,6 +97,9 @@ export default function MovimientosTabla({
                   {m.descuento != null && m.descuento > 0 && (
                     <div className="text-[10px] font-normal text-muted">− {money(m.descuento)} desc.</div>
                   )}
+                  {m.retencion != null && m.retencion > 0 && (
+                    <div className="text-[10px] font-normal text-muted">− {money(m.retencion)} ret.</div>
+                  )}
                 </td>
                 <td>
                   <div className="flex gap-1.5 justify-end">

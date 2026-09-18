@@ -126,13 +126,14 @@ export default async function ImprimirMovimientoPage({ params }: { params: Promi
                 <span className="valbig">{money(m.monto)}</span>
               </td>
             </tr>
-            {m.descuento != null && m.descuento > 0 && (
+            {((m.descuento != null && m.descuento > 0) || (m.retencion != null && m.retencion > 0)) && (
               <tr>
                 <td colSpan={2}>
-                  <span className="lbl">Descuento aplicado</span>
+                  <span className="lbl">{m.descuento && m.retencion ? "Descuento y retención aplicados" : m.retencion ? "Retención aplicada" : "Descuento aplicado"}</span>
                   <span className="v" style={{ fontWeight: 500 }}>
-                    Valor original {money(Number(m.monto) + Number(m.descuento))} − Descuento {money(m.descuento)} = Valor pagado{" "}
-                    {money(m.monto)}
+                    Valor original {money(Number(m.monto) + Number(m.descuento || 0) + Number(m.retencion || 0))}
+                    {m.descuento ? ` − Descuento ${money(m.descuento)}` : ""}
+                    {m.retencion ? ` − Retención ${money(m.retencion)}` : ""} = Valor pagado {money(m.monto)}
                   </span>
                 </td>
               </tr>

@@ -38,32 +38,52 @@ function validarCamposExtra(campos: { clave: string; etiqueta: string; requerido
   return null;
 }
 
-// Descuento opcional al momento de pagar un egreso: reduce el monto que
-// realmente sale de la cuenta (fuente única del saldo), guardando el valor
-// descontado por separado para trazabilidad. montoBase es el valor original
-// adeudado; el resultado nunca puede llegar a $0 (monto > 0 en la BD).
-type ResultadoDescuento =
-  | { ok: true; montoFinal: number; descuento: number | null; observaciones: string | null }
-  | { ok: false; error: string };
-
-function leerDescuento(formData: FormData, montoBase: number): ResultadoDescuento {
-  const observaciones = String(formData.get("observaciones") || "").trim() || null;
-  const descuentoRaw = String(formData.get("descuento") || "").trim();
-  if (!descuentoRaw) return { ok: true, montoFinal: montoBase, descuento: null, observaciones };
-  const descuento = parseFloat(descuentoRaw);
-  if (isNaN(descuento) || descuento < 0) return { ok: false, error: "El descuento no es válido." };
-  if (descuento >= montoBase) return { ok: false, error: "El descuento no puede ser mayor o igual al valor original." };
-  return { ok: true, montoFinal: Math.round((montoBase - descuento) * 100) / 100, descuento, observaciones };
-}
-
 // IVA (15%) sobre pagos a Personal por Servicios prestados: opcional, se
-// suma al valor original ANTES de aplicar un posible descuento. El check del
+// suma al valor original ANTES de aplicar descuento/retención. El check del
 // formulario (<FormularioMovimiento>) solo lo muestra para esos pagos, pero
 // el cálculo real vive aquí — nunca se confía en un monto final armado en
 // el cliente.
 function aplicarIVA(formData: FormData, montoBase: number): number {
   if (formData.get("incluir_iva") !== "si") return montoBase;
   return Math.round(montoBase * 1.15 * 100) / 100;
+}
+
+// Descuento y retención opcionales al momento de pagar un egreso — ambos
+// reducen el monto que realmente sale de la cuenta (fuente única del
+// saldo), pero significan cosas distintas y se guardan por separado:
+// - Descuento: el valor adeudado en realidad era menor (ej. un error, una
+//   nota de crédito).
+// - Retención en la fuente: la clínica retiene ese % como anticipo de
+//   impuesto de la otra persona y lo declara aparte al SRI — no es un gasto
+//   propio. Se calcula sobre el valor SIN IVA, como se hace en la práctica.
+// `montoConIVA` es el valor ya con el IVA sumado (si aplica); `montoSinIVA`
+// es el valor original, base para calcular la retención.
+type ResultadoAjustes =
+  | { ok: true; descuento: number | null; retencion: number | null; observaciones: string | null }
+  | { ok: false; error: string };
+
+function leerAjustes(formData: FormData, montoConIVA: number, montoSinIVA: number): ResultadoAjustes {
+  const observaciones = String(formData.get("observaciones") || "").trim() || null;
+
+  const descuentoRaw = String(formData.get("descuento") || "").trim();
+  let descuento: number | null = null;
+  if (descuentoRaw) {
+    descuento = parseFloat(descuentoRaw);
+    if (isNaN(descuento) || descuento < 0) return { ok: false, error: "El descuento no es válido." };
+  }
+
+  const retencionPctRaw = String(formData.get("retencion_pct") || "").trim();
+  let retencion: number | null = null;
+  if (retencionPctRaw) {
+    const pct = parseFloat(retencionPctRaw);
+    if (isNaN(pct) || pct <= 0 || pct > 100) return { ok: false, error: "El porcentaje de retención no es válido." };
+    retencion = Math.round(montoSinIVA * (pct / 100) * 100) / 100;
+  }
+
+  if ((descuento || 0) + (retencion || 0) >= montoConIVA) {
+    return { ok: false, error: "El descuento y la retención juntos no pueden ser mayores o iguales al valor a pagar." };
+  }
+  return { ok: true, descuento, retencion, observaciones };
 }
 
 // Si se marcó incluir IVA, asegura el sufijo "+ IVA" en el concepto aunque
@@ -117,12 +137,15 @@ export async function crearMovimiento(_prev: MovimientoFormState, formData: Form
 
   let montoFinal = monto;
   let descuento: number | null = null;
+  let retencion: number | null = null;
   let observaciones: string | null = null;
   if (tipo === "egreso" && confirmarAhora) {
-    const r = leerDescuento(formData, aplicarIVA(formData, monto));
+    const montoConIVA = aplicarIVA(formData, monto);
+    const r = leerAjustes(formData, montoConIVA, monto);
     if (!r.ok) return { error: r.error };
-    montoFinal = r.montoFinal;
+    montoFinal = Math.round((montoConIVA - (r.descuento || 0) - (r.retencion || 0)) * 100) / 100;
     descuento = r.descuento;
+    retencion = r.retencion;
     observaciones = r.observaciones;
   }
 
@@ -138,6 +161,7 @@ export async function crearMovimiento(_prev: MovimientoFormState, formData: Form
     concepto,
     referencia,
     descuento,
+    retencion,
     observaciones,
     pagador: tipo === "ingreso" ? pagador : null,
     beneficiario: tipo === "egreso" ? beneficiario : null,
@@ -180,12 +204,15 @@ export async function confirmarPago(_prev: ConfirmarPagoState, formData: FormDat
 
   let montoFinal = original.monto;
   let descuento: number | null = null;
+  let retencion: number | null = null;
   let observaciones: string | null = null;
   if (original.tipo === "egreso") {
-    const r = leerDescuento(formData, aplicarIVA(formData, original.monto));
+    const montoConIVA = aplicarIVA(formData, original.monto);
+    const r = leerAjustes(formData, montoConIVA, original.monto);
     if (!r.ok) return { error: r.error };
-    montoFinal = r.montoFinal;
+    montoFinal = Math.round((montoConIVA - (r.descuento || 0) - (r.retencion || 0)) * 100) / 100;
     descuento = r.descuento;
+    retencion = r.retencion;
     observaciones = r.observaciones;
   }
 
@@ -200,6 +227,7 @@ export async function confirmarPago(_prev: ConfirmarPagoState, formData: FormDat
       referencia,
       monto: montoFinal,
       descuento,
+      retencion,
       observaciones,
     })
     .eq("id", movimientoId);
@@ -251,15 +279,19 @@ export async function confirmarPagoConjunto(_prev: ConfirmarConjuntoState, formD
   // El IVA se calcula por movimiento (cada cargo + su 15%) y no sobre el
   // total ya sumado — matemáticamente da lo mismo, pero así cada fila queda
   // con su propio monto real en la base, no uno solo inflado con todo el IVA.
+  // El descuento y la retención (si hay) se dejan completos en el último de
+  // la lista, visible ahí — repartirlos en silencio entre varios cargos
+  // distintos sería más confuso que dejarlos en uno solo y explicado.
   const montosConIVA = originales.map((m) => aplicarIVA(formData, Number(m.monto)));
-  const totalBase = montosConIVA.reduce((s, m) => s + m, 0);
-  const r = leerDescuento(formData, totalBase);
+  const totalConIVA = montosConIVA.reduce((s, m) => s + m, 0);
+  const totalSinIVA = originales.reduce((s, m) => s + Number(m.monto), 0);
+  const r = leerAjustes(formData, totalConIVA, totalSinIVA);
   if (!r.ok) return { error: r.error };
 
   for (let i = 0; i < originales.length; i++) {
     const m = originales[i];
     const esUltimo = i === originales.length - 1;
-    const montoFinal = esUltimo && r.descuento ? montosConIVA[i] - r.descuento : montosConIVA[i];
+    const montoFinal = esUltimo ? montosConIVA[i] - (r.descuento || 0) - (r.retencion || 0) : montosConIVA[i];
     const { error } = await supabase
       .from("movimientos_financieros")
       .update({
@@ -271,6 +303,7 @@ export async function confirmarPagoConjunto(_prev: ConfirmarConjuntoState, formD
         monto: montoFinal,
         concepto: conSufijoIVA(formData, m.concepto),
         descuento: esUltimo ? r.descuento : null,
+        retencion: esUltimo ? r.retencion : null,
         observaciones: esUltimo ? r.observaciones : null,
       })
       .eq("id", m.id);
