@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { registrarAuditoria } from "@/lib/auditoria";
 import { esHexValido } from "@/lib/color";
 import { esTemaOscuroValido } from "@/lib/temas-oscuros";
 
@@ -23,7 +24,11 @@ export async function actualizarConfiguracion(_prev: ConfiguracionState, formDat
   if (!esTemaOscuroValido(temaOscuro)) return { error: "Selecciona un tema oscuro válido." };
 
   const supabase = await createClient();
-  const { data: actual } = await supabase.from("configuracion").select("id,logo_url").limit(1).maybeSingle();
+  const { data: actual } = await supabase
+    .from("configuracion")
+    .select("id,logo_url,nombre_empresa,color_primario,color_header")
+    .limit(1)
+    .maybeSingle();
   if (!actual) return { error: "No se encontró la fila de configuración — corre la migración en Supabase primero." };
 
   let logoUrl = actual.logo_url;
@@ -57,6 +62,18 @@ export async function actualizarConfiguracion(_prev: ConfiguracionState, formDat
     })
     .eq("id", actual.id);
   if (error) return { error: "No se pudo guardar la configuración." };
+
+  // El tema oscuro no queda en la auditoría a propósito — es una
+  // preferencia visual, no un cambio significativo que valga la pena
+  // registrar (a diferencia del nombre, logo o colores de marca).
+  const cambios: string[] = [];
+  if (actual.nombre_empresa !== nombreEmpresa) cambios.push(`Razón social: "${actual.nombre_empresa}" → "${nombreEmpresa}"`);
+  if (logoUrl !== actual.logo_url) cambios.push("Logo actualizado");
+  if (actual.color_primario !== colorPrimario) cambios.push(`Color principal: ${actual.color_primario} → ${colorPrimario}`);
+  if (actual.color_header !== colorHeader) cambios.push(`Color del encabezado: ${actual.color_header} → ${colorHeader}`);
+  if (cambios.length) {
+    await registrarAuditoria("configuracion_editada", cambios.join(" · "));
+  }
 
   // Revalida todo (el logo/nombre/colores aparecen en cada página).
   revalidatePath("/", "layout");

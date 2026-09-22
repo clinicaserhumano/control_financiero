@@ -14,6 +14,7 @@ const ACCION_LABEL: Record<string, string> = {
   usuario_creado: "Usuario creado",
   usuario_editado: "Usuario editado",
   usuario_borrado: "Usuario borrado",
+  configuracion_editada: "Configuración editada",
 };
 
 function fmtFechaHora(iso: string): string {
@@ -38,13 +39,15 @@ export default async function AuditoriaPage() {
     <div>
       <div className="flex items-start gap-2 -mt-1.5 mb-[18px]">
         <p className="text-[12.5px] text-muted m-0">
-          Registro de movimientos financieros y usuarios — nadie puede editarlo ni borrarlo, ni siquiera el
-          administrador. Solo el administrador ve esta pantalla.
+          Registro de movimientos financieros, usuarios y Configuración — nadie puede editarlo ni borrarlo, ni
+          siquiera el administrador. Solo el administrador ve esta pantalla.
         </p>
         <InfoBoton titulo="Historial de auditoría">
           <p className="m-0">
-            Cada vez que se crea, paga, corrige o anula un movimiento — o se crea, edita o borra un usuario — queda
-            un registro acá, con quién lo hizo y cuándo. Muestra los últimos 300.
+            Cada vez que se crea, paga, corrige o anula un movimiento — se crea, edita o borra un usuario — o se
+            cambia el nombre, logo o los colores de marca en Configuración — queda un registro acá, con quién lo
+            hizo y cuándo. Muestra los últimos 300. (El tema oscuro no queda registrado: es solo una preferencia
+            visual, no un cambio significativo.)
           </p>
         </InfoBoton>
       </div>

@@ -767,8 +767,9 @@ export default function AyudaPage() {
 
         <Seccion id="auditoria" titulo="Historial de auditoría (solo Administrador)">
           <p>
-            Un registro de solo lectura: cada vez que se crea, paga, corrige o anula un movimiento — o se crea,
-            edita o borra un usuario — queda una fila acá con quién lo hizo y cuándo.
+            Un registro de solo lectura: cada vez que se crea, paga, corrige o anula un movimiento — se crea, edita
+            o borra un usuario — o se cambia el nombre, logo o los colores de marca en Configuración — queda una
+            fila acá con quién lo hizo y cuándo. El tema oscuro no queda registrado, es solo una preferencia visual.
           </p>
           <p>
             Nadie puede editarlo ni borrarlo, ni siquiera el Administrador — es intencional, para que sea un
