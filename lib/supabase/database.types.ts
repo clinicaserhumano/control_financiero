@@ -277,6 +277,40 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['configuracion']['Insert']>;
         Relationships: [];
       };
+      presupuestos: {
+        Row: {
+          categoria: string;
+          monto_mensual: number;
+          actualizado_en: string;
+        };
+        Insert: {
+          categoria: string;
+          monto_mensual?: number;
+          actualizado_en?: string;
+        };
+        Update: Partial<Database['public']['Tables']['presupuestos']['Insert']>;
+        Relationships: [];
+      };
+      auditoria: {
+        Row: {
+          id: string;
+          accion: string;
+          detalle: string;
+          usuario_email: string | null;
+          usuario_alias: string | null;
+          creado_en: string;
+        };
+        Insert: {
+          id?: string;
+          accion: string;
+          detalle: string;
+          usuario_email?: string | null;
+          usuario_alias?: string | null;
+          creado_en?: string;
+        };
+        Update: Partial<Database['public']['Tables']['auditoria']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

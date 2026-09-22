@@ -1,7 +1,10 @@
+import { USUARIO_PROTEGIDO } from "@/lib/auth/roles";
+
 const SECCIONES = [
   { id: "bienvenida", titulo: "Bienvenida" },
   { id: "entrar", titulo: "Cómo entrar" },
   { id: "pantalla", titulo: "Partes de la pantalla" },
+  { id: "buscador", titulo: "Buscador global (Ctrl+K)" },
   { id: "dashboard", titulo: "Dashboard" },
   { id: "cuentas", titulo: "Cuentas bancarias" },
   { id: "ingresos", titulo: "Registrar un ingreso" },
@@ -18,6 +21,7 @@ const SECCIONES = [
   { id: "reportes", titulo: "Reportes e impresión" },
   { id: "notas", titulo: "Notas y Recordatorios" },
   { id: "usuarios", titulo: "Usuarios (solo Administrador)" },
+  { id: "auditoria", titulo: "Historial de auditoría (solo Administrador)" },
   { id: "configuracion", titulo: "Configuración (solo Administrador)" },
   { id: "lectura", titulo: "Modo Solo lectura" },
   { id: "consejos", titulo: "Preguntas frecuentes" },
@@ -108,44 +112,64 @@ export default function AyudaPage() {
         <Seccion id="pantalla" titulo="Partes de la pantalla">
           <p>Todas las pantallas del sistema comparten la misma estructura:</p>
           <Esquema>
-            <div className="rounded-md bg-header text-white px-3 py-2 mb-1.5 flex items-center justify-between">
-              <span className="font-bold">Logo · Control Financiero</span>
-              <span className="text-[11px]">TU NOMBRE · rol · 🔔 · ☾ modo oscuro · Cerrar sesión</span>
-            </div>
-            <div className="rounded-md bg-carbon text-white px-3 py-1.5 mb-1.5 text-[11px] flex gap-3 flex-wrap">
-              <span>Cuentas</span>
-              <span>Personal</span>
-              <span>Ingresos</span>
-              <span>Egresos</span>
-              <span>Cuentas x Pagar</span>
-              <span>Reportes</span>
-              <span className="ml-auto text-primary">Cómo usar</span>
-            </div>
-            <div className="rounded-md border border-border bg-[var(--color-surface)] px-3 py-4 text-center text-muted">
-              Aquí cambia el contenido según la pestaña que elijas — busca el botón ⓘ junto al título de cada una
+            <div className="flex gap-1.5">
+              <div className="rounded-md bg-carbon text-white px-2.5 py-2 text-[11px] flex flex-col gap-1.5 w-[110px] flex-none">
+                <span className="font-bold mb-1">Logo · Nombre</span>
+                <span>📊 Dashboard</span>
+                <span>🏦 Cuentas</span>
+                <span>👤 Personal</span>
+                <span>💰 Ingresos</span>
+                <span>💸 Egresos</span>
+                <span className="text-primary mt-auto">❔ Cómo usar</span>
+              </div>
+              <div className="flex-1 flex flex-col gap-1.5">
+                <div className="rounded-md bg-header text-white px-3 py-2 flex items-center justify-between text-[11px]">
+                  <span>🔍 · 🔔 · ☾ modo oscuro</span>
+                  <span>TU NOMBRE · rol · Cerrar sesión</span>
+                </div>
+                <div className="rounded-md border border-border bg-[var(--color-surface)] px-3 py-4 text-center text-muted flex-1">
+                  Aquí cambia el contenido según el módulo que elijas — busca el botón ⓘ junto al título
+                </div>
+              </div>
             </div>
           </Esquema>
           <ul className="list-disc pl-5 flex flex-col gap-1">
             <li>
-              <b>Encabezado (arriba, naranja o carbón según el modo):</b> el logo, tu nombre/alias, tu tipo de
-              cuenta, la campanita de notificaciones, el botón de modo oscuro/claro, y Cerrar sesión.
+              <b>Barra lateral (izquierda):</b> el logo/nombre arriba, los módulos en el medio, y{" "}
+              <b>Cómo usar</b> abajo. La pestaña Usuarios/Auditoría/Configuración solo las ve el Administrador. En
+              el celular es un botón ☰ flotante que abre el mismo panel.
+            </li>
+            <li>
+              <b>« Compactar / » Expandir</b> (abajo de los módulos, en escritorio): reduce la barra lateral a solo
+              íconos para ganar espacio de pantalla — el nombre de cada módulo aparece al pasar el mouse encima.
+              Se recuerda la próxima vez que entres.
+            </li>
+            <li>
+              <b>Encabezado (arriba, a la derecha):</b> el buscador 🔍, la campanita de notificaciones, el modo
+              oscuro/claro, tu nombre/alias, tu tipo de cuenta y Cerrar sesión.
             </li>
             <li>
               <b>Campanita 🔔 de notificaciones:</b> avisa cuando hoy le toca pagar a alguien de Personal (según su
               día de pago configurado en su ficha) o cuando hay cuentas por pagar acumulándose.
             </li>
             <li>
-              <b>Menú de pestañas (debajo del encabezado):</b> para moverte entre los módulos del sistema. La
-              pestaña Usuarios solo la ve el Administrador.
-            </li>
-            <li>
               <b>Botón ⓘ (junto al título de cada sección):</b> un resumen express de qué hace esa pantalla y sus
               botones principales, con un enlace a la parte de este manual con más detalle.
             </li>
-            <li>
-              <b>Cómo usar (esquina derecha, en naranja):</b> este manual, siempre a un clic de distancia.
-            </li>
           </ul>
+        </Seccion>
+
+        <Seccion id="buscador" titulo="Buscador global (Ctrl+K)">
+          <p>
+            El ícono 🔍 en el encabezado (o el atajo <span className="mono">Ctrl+K</span> / <span className="mono">Cmd+K</span>{" "}
+            en Mac) abre un buscador que revisa Personal, Movimientos y Cuentas a la vez — no hace falta saber de
+            antemano en qué módulo está lo que buscas.
+          </p>
+          <p>
+            Busca por nombre, cédula/RUC, concepto, N° de cheque o de egreso, y nombre/banco de una cuenta. Escribe
+            al menos 2 letras; al hacer clic en un resultado te lleva directo a esa ficha, o al listado de
+            Movimientos ya filtrado si es un movimiento.
+          </p>
         </Seccion>
 
         <Seccion id="dashboard" titulo="Dashboard">
@@ -174,6 +198,11 @@ export default function AyudaPage() {
             <li>
               Cada tarjeta con gráfico trae su propio botón <b>⬇️ Descargar CSV</b>, con los mismos datos que ves
               graficados — se abre directo en Excel o Google Sheets.
+            </li>
+            <li>
+              <b>Presupuestos del mes:</b> opcional — si no le pones un monto a una categoría, no se compara contra
+              nada. Si le pones uno, la barra se pone ámbar cerca del límite y roja al pasarse, comparado contra lo
+              gastado en esa categoría durante el mes calendario actual (no el filtro de fechas).
             </li>
           </ul>
         </Seccion>
@@ -728,7 +757,23 @@ export default function AyudaPage() {
               una clave nueva. La única excepción es que nadie puede cambiar su propio tipo de cuenta, para evitar
               quedarse sin acceso de Administrador por accidente.
             </li>
+            <li>
+              <b>🗑️ Borrar un usuario:</b> pide tu propia contraseña para confirmar (no se puede deshacer). No
+              puedes borrar tu propia cuenta ni la cuenta principal ({USUARIO_PROTEGIDO}) — esa siempre queda como
+              acceso garantizado al sistema.
+            </li>
           </ul>
+        </Seccion>
+
+        <Seccion id="auditoria" titulo="Historial de auditoría (solo Administrador)">
+          <p>
+            Un registro de solo lectura: cada vez que se crea, paga, corrige o anula un movimiento — o se crea,
+            edita o borra un usuario — queda una fila acá con quién lo hizo y cuándo.
+          </p>
+          <p>
+            Nadie puede editarlo ni borrarlo, ni siquiera el Administrador — es intencional, para que sea un
+            historial confiable. Muestra los últimos 300 registros.
+          </p>
         </Seccion>
 
         <Seccion id="configuracion" titulo="Configuración (solo Administrador)">

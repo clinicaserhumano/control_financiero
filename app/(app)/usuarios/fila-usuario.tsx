@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { fmtDate } from "@/lib/calculos";
-import { ROL_LABEL, type Rol } from "@/lib/auth/roles";
+import { ROL_LABEL, USUARIO_PROTEGIDO, type Rol } from "@/lib/auth/roles";
 import { actualizarUsuario } from "./actions";
+import BorrarUsuarioButton from "./borrar-usuario-button";
 
 export type Usuario = { id: string; email: string; alias: string; rol: Rol; creado_en: string };
 
@@ -35,9 +36,14 @@ export default function FilaUsuario({ usuario, esUsuarioActual }: { usuario: Usu
         </td>
         <td>{fmtDate(usuario.creado_en.slice(0, 10))}</td>
         <td>
-          <button type="button" className="btn-ghost btn-sm" onClick={() => setEditando(true)}>
-            Editar
-          </button>
+          <div className="flex gap-1.5 justify-end">
+            <button type="button" className="btn-ghost btn-sm" onClick={() => setEditando(true)}>
+              Editar
+            </button>
+            {!esUsuarioActual && usuario.email.toLowerCase() !== USUARIO_PROTEGIDO && (
+              <BorrarUsuarioButton userId={usuario.id} alias={usuario.alias} />
+            )}
+          </div>
         </td>
       </tr>
     );

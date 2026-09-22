@@ -167,3 +167,21 @@ export interface Configuracion {
   tema_oscuro: string;
   actualizado_en: string;
 }
+
+// Presupuesto mensual por categoría de egreso (Dashboard) — 0 significa "sin
+// presupuesto establecido", no se compara contra nada.
+export interface Presupuesto {
+  categoria: string;
+  monto_mensual: number;
+  actualizado_en: string;
+}
+
+// Historial de auditoría: solo de agregar, nadie puede editarlo ni borrarlo.
+export interface EntradaAuditoria {
+  id: string;
+  accion: string;
+  detalle: string;
+  usuario_email: string | null;
+  usuario_alias: string | null;
+  creado_en: string;
+}

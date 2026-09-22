@@ -66,6 +66,18 @@ function categoriaEgreso(m: MovDashboard): string {
   return 'Otros gastos';
 }
 
+// Mismo orden en el que se muestran en Configuración/Dashboard — coincide
+// con el check constraint de la tabla presupuestos.
+export const CATEGORIAS_PRESUPUESTO = [
+  'Proveedor',
+  'Servicios prestados',
+  'Personal afiliado',
+  'Luz',
+  'Agua',
+  'Internet',
+  'Otros gastos',
+] as const;
+
 export function egresosPorCategoria(movimientos: MovDashboard[]): Barra[] {
   const porCategoria = new Map<string, number>();
   for (const m of movimientos) {
@@ -101,6 +113,20 @@ export function topBeneficiarios(movimientos: MovDashboard[], n = 10): Barra[] {
     .map(([etiqueta, total]) => ({ etiqueta, total }))
     .sort((a, b) => b.total - a.total)
     .slice(0, n);
+}
+
+// Gasto confirmado del mes indicado (YYYY-MM), agrupado por categoría —
+// independiente del filtro de fechas del Dashboard, porque un presupuesto
+// siempre es "este mes calendario", no un rango elegido a mano.
+export function gastoDelMesPorCategoria(movimientos: MovDashboard[], mesISO: string): Map<string, number> {
+  const porCategoria = new Map<string, number>();
+  for (const m of movimientos) {
+    if (m.tipo !== 'egreso' || m.estado !== 'confirmado') continue;
+    if (m.fecha.slice(0, 7) !== mesISO) continue;
+    const cat = categoriaEgreso(m);
+    porCategoria.set(cat, (porCategoria.get(cat) || 0) + Number(m.monto || 0));
+  }
+  return porCategoria;
 }
 
 export type Antiguedad = { etiqueta: string; total: number; cantidad: number };

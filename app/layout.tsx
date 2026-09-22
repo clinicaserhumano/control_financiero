@@ -46,7 +46,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const ESTILO_TEMA_OSCURO = cssTemaOscuro(temaOscuroId);
 
   return (
-    <html lang="es" className="h-full antialiased">
+    <html lang="es" className="h-full antialiased" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
         <style dangerouslySetInnerHTML={{ __html: ESTILO_MARCA }} />

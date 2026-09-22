@@ -7,10 +7,13 @@ import {
   egresosPorFormaPago,
   topBeneficiarios,
   pendientesPorAntiguedad,
+  gastoDelMesPorCategoria,
+  CATEGORIAS_PRESUPUESTO,
   type MovDashboard,
 } from "@/lib/dashboard";
 import GraficoTendencia from "@/components/dashboard/grafico-tendencia";
 import GraficoDistribucion from "@/components/dashboard/grafico-distribucion";
+import PresupuestosForm from "@/components/dashboard/presupuestos-form";
 import BotonDescargarCSV from "@/components/boton-descargar-csv";
 import InfoBoton from "@/components/ayuda/info-boton";
 
@@ -43,12 +46,15 @@ export default async function DashboardPage({
   const hasta = sp.hasta || hoy;
 
   const supabase = await createClient();
-  const { data: movimientos } = await supabase
-    .from("movimientos_financieros")
-    .select(
-      "tipo,estado,monto,fecha,creado_en,cuenta_id,pagador,beneficiario,razon_egreso,tercero:terceros(tipo,nombre,apellido),tipo_movimiento:tipos_movimiento(nombre)"
-    )
-    .neq("estado", "anulado");
+  const [{ data: movimientos }, { data: presupuestosData }] = await Promise.all([
+    supabase
+      .from("movimientos_financieros")
+      .select(
+        "tipo,estado,monto,fecha,creado_en,cuenta_id,pagador,beneficiario,razon_egreso,tercero:terceros(tipo,nombre,apellido),tipo_movimiento:tipos_movimiento(nombre)"
+      )
+      .neq("estado", "anulado"),
+    supabase.from("presupuestos").select("categoria,monto_mensual"),
+  ]);
 
   const lista = (movimientos ?? []) as unknown as MovConRelaciones[];
   const enRango = lista.filter((m) => m.fecha >= desde && m.fecha <= hasta);
@@ -67,6 +73,15 @@ export default async function DashboardPage({
   const saldoNetoMes = ingresosMesActual - egresosMesActual;
   const totalPendiente = totalPorTipoEstado(lista, "egreso", "pendiente");
   const saldoTotalCuentas = saldoCuenta(lista);
+
+  // ---- Presupuestos: siempre del mes calendario actual, no del filtro ----
+  const gastoPorCategoria = gastoDelMesPorCategoria(lista, mesActual);
+  const presupuestosPorCategoria = new Map((presupuestosData ?? []).map((p) => [p.categoria, p.monto_mensual]));
+  const presupuestoItems = CATEGORIAS_PRESUPUESTO.map((categoria) => ({
+    categoria,
+    presupuesto: presupuestosPorCategoria.get(categoria) ?? 0,
+    gastado: gastoPorCategoria.get(categoria) ?? 0,
+  }));
 
   // ---- Gráficos: respetan el filtro Desde/Hasta ----
   const tendencia = tendenciaMensual(enRango, desde, hasta);
@@ -90,6 +105,10 @@ export default async function DashboardPage({
           <p className="m-0">
             <b>Pendientes por antigüedad</b> no depende del filtro de fechas — siempre muestra todo lo que sigue
             pendiente hoy, agrupado por cuántos días lleva esperando pago.
+          </p>
+          <p className="m-0">
+            <b>Presupuestos del mes</b> es opcional: déjalo en blanco si no manejas presupuesto. Si le pones un
+            monto a una categoría, la barra se pone ámbar cerca del límite y roja al pasarse.
           </p>
         </InfoBoton>
       </div>
@@ -162,6 +181,15 @@ export default async function DashboardPage({
         </div>
         <div className="card-b">
           <GraficoTendencia puntos={tendencia} />
+        </div>
+      </div>
+
+      <div className="card mb-5">
+        <div className="card-h">
+          <h2>Presupuestos del mes</h2>
+        </div>
+        <div className="card-b">
+          <PresupuestosForm items={presupuestoItems} />
         </div>
       </div>
 

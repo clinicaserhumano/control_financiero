@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { registrarAuditoria } from "@/lib/auditoria";
+import { money } from "@/lib/calculos";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -169,6 +171,13 @@ export async function crearMovimiento(_prev: MovimientoFormState, formData: Form
   });
   if (error) return { error: "No se pudo guardar el movimiento." };
 
+  await registrarAuditoria(
+    tipo === "ingreso" ? "ingreso_creado" : "egreso_creado",
+    `${tipo === "ingreso" ? "Ingreso" : "Egreso"} ${confirmarAhora ? "confirmado" : "pendiente"}: ${
+      concepto || pagador || beneficiario || "(sin concepto)"
+    } · ${money(montoFinal)}`
+  );
+
   revalidarTodo(cuentaId, terceroId);
   redirect(redirectTo);
 }
@@ -232,6 +241,8 @@ export async function confirmarPago(_prev: ConfirmarPagoState, formData: FormDat
     })
     .eq("id", movimientoId);
   if (error) return { error: "No se pudo registrar el pago." };
+
+  await registrarAuditoria("pago_confirmado", `Pago confirmado: ${concepto || "(sin concepto)"} · ${money(montoFinal)}`);
 
   revalidarTodo(cuentaId, original?.tercero_id ?? null);
   return { ok: true, movimientoId, redirectTo };
@@ -310,6 +321,11 @@ export async function confirmarPagoConjunto(_prev: ConfirmarConjuntoState, formD
     if (error) return { error: "No se pudo registrar el pago combinado." };
   }
 
+  await registrarAuditoria(
+    "pago_combinado_confirmado",
+    `Pago combinado confirmado (${originales.length} movimientos) · ${money(totalConIVA - (r.descuento || 0) - (r.retencion || 0))}`
+  );
+
   revalidarTodo(cuentaId, null);
   originales.forEach((m) => m.tercero_id && revalidatePath(`/terceros/${m.tercero_id}`));
   return { ok: true, redirectTo };
@@ -364,6 +380,8 @@ export async function editarDetalleMovimiento(_prev: EditarDetalleState, formDat
     .eq("id", movimientoId);
   if (error) return { error: "No se pudo guardar." };
 
+  await registrarAuditoria("movimiento_editado", `Detalle corregido (cheque/concepto/comprobante): ${concepto || "(sin concepto)"}`);
+
   revalidarTodo(original.cuenta_id, original.tercero_id);
   return { ok: true, redirectTo };
 }
@@ -374,7 +392,7 @@ export async function anularMovimiento(id: string) {
   const supabase = await createClient();
   const { data: mov } = await supabase
     .from("movimientos_financieros")
-    .select("cuenta_id,tercero_id,origen")
+    .select("cuenta_id,tercero_id,origen,concepto,monto,tipo")
     .eq("id", id)
     .single();
   await supabase.from("movimientos_financieros").update({ estado: "anulado" }).eq("id", id);
@@ -383,6 +401,12 @@ export async function anularMovimiento(id: string) {
   // siempre a un cargo anulado, sin forma de rehacerlas desde la bitácora.
   if (mov?.origen === "nomina") {
     await supabase.from("semanas").update({ movimiento_id: null }).eq("movimiento_id", id);
+  }
+  if (mov) {
+    await registrarAuditoria(
+      "movimiento_anulado",
+      `${mov.tipo === "ingreso" ? "Ingreso" : "Egreso"} anulado: ${mov.concepto || "(sin concepto)"} · ${money(mov.monto)}`
+    );
   }
   revalidarTodo(mov?.cuenta_id ?? null, mov?.tercero_id ?? null);
 }
