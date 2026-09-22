@@ -18,9 +18,17 @@ export function fmtDate(iso: string | null | undefined): string {
   return `${d}/${m}/${a}`;
 }
 
+// "Hoy" siempre en hora de Ecuador, no en la del servidor (UTC en
+// producción) — si no, entre las 7pm y medianoche (Ecuador está en UTC-5)
+// esto marcaría el día siguiente en toda la app: filtros por defecto,
+// KPIs del Dashboard, la fecha al registrar un movimiento, recordatorios...
 export function todayISO(): string {
-  const d = new Date();
-  return d.toISOString().slice(0, 10);
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Guayaquil',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
 }
 
 export function addDaysISO(iso: string, delta: number): string {
