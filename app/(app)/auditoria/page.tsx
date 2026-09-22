@@ -18,7 +18,11 @@ const ACCION_LABEL: Record<string, string> = {
 };
 
 function fmtFechaHora(iso: string): string {
+  // Sin timeZone explícito, esto se formatea en la zona del servidor (UTC
+  // en producción), no en la hora real de la clínica — con Ecuador en
+  // UTC-5, un registro de las 4pm salía mostrando "9pm".
   return new Date(iso).toLocaleString("es-EC", {
+    timeZone: "America/Guayaquil",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
