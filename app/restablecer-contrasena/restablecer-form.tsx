@@ -11,7 +11,7 @@ export default function RestablecerForm() {
   const [state, formAction, pending] = useActionState<EstadoLocal, FormData>(async (_prev, formData) => {
     const resultado: ActualizarContrasenaState = await actualizarContrasena(formData);
     if (resultado && "ok" in resultado) {
-      router.push("/cuentas");
+      router.push("/dashboard");
       return null;
     }
     return resultado;

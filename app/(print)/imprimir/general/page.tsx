@@ -1,11 +1,12 @@
 import { Fragment } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { saldoCuenta, totalPorTipoEstado, money, fmtDate, todayISO } from "@/lib/calculos";
+import { saldoCuenta, totalPorTipoEstado, money, fmtDate } from "@/lib/calculos";
 import { TERCERO_TIPO_LABEL, nombreCompleto } from "@/lib/terceros";
 import { obtenerPerfilActual } from "@/lib/auth/perfil";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
 import PrintLogo from "@/components/print/print-logo";
+import PrintFooter from "@/components/print/print-footer";
 import type { Cuenta, MovimientoFinanciero, Tercero } from "@/lib/types";
 
 type MovConRelaciones = MovimientoFinanciero & {
@@ -189,12 +190,7 @@ export default async function ImprimirGeneralPage({
           </>
         )}
 
-        <div className="foot">
-          <span>
-            Generado el {fmtDate(todayISO())} por {perfil?.alias || perfil?.email || "—"}
-          </span>
-          <span>Control Financiero · Ser Humano</span>
-        </div>
+        <PrintFooter perfil={perfil} />
       </div>
     </>
   );

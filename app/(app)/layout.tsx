@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ROL_LABEL } from "@/lib/auth/roles";
 import { obtenerPerfilActual } from "@/lib/auth/perfil";
+import { obtenerConfiguracion } from "@/lib/configuracion";
 import { RolProvider } from "@/lib/auth/role-context";
 import NavTabs from "./nav-tabs";
 import ThemeToggle from "./theme-toggle";
@@ -20,15 +21,24 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const perfil = await obtenerPerfilActual();
   const rol = perfil?.rol ?? "visor";
+  const configuracion = await obtenerConfiguracion();
 
   return (
     <RolProvider rol={rol}>
       <div className="min-h-screen flex flex-col">
         <header className="bg-header text-white px-4 sm:px-[22px] py-3 sm:py-3.5 flex flex-wrap items-center justify-between gap-2 sm:gap-3.5 border-b-[3px] border-amber">
           <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
-            <Image src="/logo-blanco.png" alt="Ser Humano" width={97} height={40} className="flex-none h-8 sm:h-10 w-auto" priority />
+            {configuracion.logo_url ? (
+              // Logo subido por el administrador: URL externa (Supabase
+              // Storage), <img> plano para no tener que declarar el dominio
+              // en next.config — igual criterio que el logo de impresión.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={configuracion.logo_url} alt={configuracion.nombre_empresa} className="flex-none h-8 sm:h-10 w-auto object-contain" />
+            ) : (
+              <Image src="/logo-blanco.png" alt={configuracion.nombre_empresa} width={97} height={40} className="flex-none h-8 sm:h-10 w-auto" priority />
+            )}
             <div className="min-w-0">
-              <h1 className="text-[15px] sm:text-[17px] m-0 font-bold tracking-tight truncate">Control Financiero</h1>
+              <h1 className="text-[15px] sm:text-[17px] m-0 font-bold tracking-tight truncate">{configuracion.nombre_empresa}</h1>
               <div className="text-xs text-white/75 mt-px hidden sm:block">
                 Egresos, nómina, cuentas por pagar e ingresos
               </div>

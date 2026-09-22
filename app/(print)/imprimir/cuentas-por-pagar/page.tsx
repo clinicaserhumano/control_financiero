@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { money, fmtDate, todayISO } from "@/lib/calculos";
+import { money, fmtDate } from "@/lib/calculos";
 import { nombreCompleto } from "@/lib/terceros";
 import { obtenerPerfilActual } from "@/lib/auth/perfil";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
 import PrintLogo from "@/components/print/print-logo";
+import PrintFooter from "@/components/print/print-footer";
 import type { MovimientoFinanciero } from "@/lib/types";
 
 type MovConNombres = MovimientoFinanciero & { tercero: { nombre: string; apellido: string | null } | null };
@@ -78,12 +79,7 @@ export default async function ImprimirCxPPage({ searchParams }: { searchParams: 
             </tr>
           </tbody>
         </table>
-        <div className="foot">
-          <span>
-            Generado el {fmtDate(todayISO())} por {perfil?.alias || perfil?.email || "—"}
-          </span>
-          <span>Control Financiero · Ser Humano</span>
-        </div>
+        <PrintFooter perfil={perfil} />
       </div>
     </>
   );

@@ -155,3 +155,15 @@ export interface Nota {
   creado_en: string;
   actualizado_en: string;
 }
+
+// Fila única (singleton): nombre, logo y colores de marca, editables desde
+// Configuración en vez de estar fijos en el código.
+export interface Configuracion {
+  id: string;
+  nombre_empresa: string;
+  logo_url: string | null;
+  color_primario: string;
+  color_header: string;
+  tema_oscuro: string;
+  actualizado_en: string;
+}

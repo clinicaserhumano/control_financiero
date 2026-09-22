@@ -16,14 +16,17 @@ const TABS = [
   { href: "/notas", label: "Notas", match: (p: string) => p.startsWith("/notas") },
 ];
 
-const TAB_USUARIOS = { href: "/usuarios", label: "Usuarios", match: (p: string) => p.startsWith("/usuarios") };
+const TABS_ADMIN = [
+  { href: "/usuarios", label: "Usuarios", match: (p: string) => p.startsWith("/usuarios") },
+  { href: "/configuracion", label: "Configuración", match: (p: string) => p.startsWith("/configuracion") },
+];
 
 export default function NavTabs() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tipo = searchParams.get("tipo") || "";
   const esAdmin = useEsAdmin();
-  const tabs = esAdmin ? [...TABS, TAB_USUARIOS] : TABS;
+  const tabs = esAdmin ? [...TABS, ...TABS_ADMIN] : TABS;
   const [abierto, setAbierto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 

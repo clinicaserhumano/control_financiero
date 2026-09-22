@@ -18,6 +18,7 @@ const SECCIONES = [
   { id: "reportes", titulo: "Reportes e impresión" },
   { id: "notas", titulo: "Notas y Recordatorios" },
   { id: "usuarios", titulo: "Usuarios (solo Administrador)" },
+  { id: "configuracion", titulo: "Configuración (solo Administrador)" },
   { id: "lectura", titulo: "Modo Solo lectura" },
   { id: "consejos", titulo: "Preguntas frecuentes" },
 ] as const;
@@ -726,6 +727,28 @@ export default function AyudaPage() {
               <b>Editar cualquier usuario</b> (incluida la propia): cambiar su alias, su tipo de cuenta, o ponerle
               una clave nueva. La única excepción es que nadie puede cambiar su propio tipo de cuenta, para evitar
               quedarse sin acceso de Administrador por accidente.
+            </li>
+          </ul>
+        </Seccion>
+
+        <Seccion id="configuracion" titulo="Configuración (solo Administrador)">
+          <p>
+            Nombre de la razón social, logo y colores de marca — se usan en el encabezado, el menú, la pantalla de
+            inicio de sesión y todos los documentos impresos, así que un solo cambio aquí se ve en toda la
+            aplicación al instante.
+          </p>
+          <ul className="list-disc pl-5 flex flex-col gap-1">
+            <li>
+              <b>Logo:</b> tamaño recomendado 400×160px, PNG con fondo transparente, máximo 2MB — así se ve bien
+              tanto en el encabezado oscuro como en la pantalla de inicio de sesión clara.
+            </li>
+            <li>
+              <b>Color principal</b> y <b>Color del encabezado:</b> se eligen con el selector de color o escribiendo
+              el código hexadecimal directamente (ej. <span className="mono">#fc6b12</span>).
+            </li>
+            <li>
+              <b>Tema oscuro:</b> elige entre tres paletas (Carbón, Negro intenso, Azul marino oscuro) para cuando
+              alguien active el modo 🌙 desde el encabezado — no afecta al modo claro.
             </li>
           </ul>
         </Seccion>

@@ -255,6 +255,28 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['perfiles_usuario']['Insert']>;
         Relationships: [];
       };
+      configuracion: {
+        Row: {
+          id: string;
+          nombre_empresa: string;
+          logo_url: string | null;
+          color_primario: string;
+          color_header: string;
+          tema_oscuro: string;
+          actualizado_en: string;
+        };
+        Insert: {
+          id?: string;
+          nombre_empresa?: string;
+          logo_url?: string | null;
+          color_primario?: string;
+          color_header?: string;
+          tema_oscuro?: string;
+          actualizado_en?: string;
+        };
+        Update: Partial<Database['public']['Tables']['configuracion']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

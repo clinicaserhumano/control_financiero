@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { fmtDate, todayISO } from "@/lib/calculos";
 import { TERCERO_TIPO_LABEL, nombreCompleto, formatearHorario } from "@/lib/terceros";
 import { obtenerPerfilActual } from "@/lib/auth/perfil";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
 import PrintLogo from "@/components/print/print-logo";
+import PrintFooter from "@/components/print/print-footer";
 import type { Tercero } from "@/lib/types";
 
 export default async function ImprimirHorariosPage({ searchParams }: { searchParams: Promise<{ ids?: string }> }) {
@@ -59,12 +59,7 @@ export default async function ImprimirHorariosPage({ searchParams }: { searchPar
           </table>
         )}
 
-        <div className="foot">
-          <span>
-            Generado el {fmtDate(todayISO())} por {perfil?.alias || perfil?.email || "—"}
-          </span>
-          <span>Control Financiero · Ser Humano</span>
-        </div>
+        <PrintFooter perfil={perfil} />
       </div>
     </>
   );

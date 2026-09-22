@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { fmtDate, todayISO, horaDecimal, calcularHorasSemana } from "@/lib/calculos";
+import { fmtDate, horaDecimal, calcularHorasSemana } from "@/lib/calculos";
 import { TERCERO_TIPO_LABEL, ORDEN_DIAS, nombreCompleto, formatearHorario } from "@/lib/terceros";
 import { obtenerPerfilActual } from "@/lib/auth/perfil";
 import PrintStyles from "@/components/print/print-styles";
 import PrintActions from "@/components/print/print-actions";
 import PrintLogo from "@/components/print/print-logo";
+import PrintFooter from "@/components/print/print-footer";
 import type { Tercero } from "@/lib/types";
 
 export default async function ImprimirHorarioPage({ params }: { params: Promise<{ id: string }> }) {
@@ -139,12 +140,7 @@ export default async function ImprimirHorarioPage({ params }: { params: Promise<
           )}
         </div>
 
-        <div className="foot">
-          <span>
-            Generado el {fmtDate(todayISO())} por {perfil?.alias || perfil?.email || "—"}
-          </span>
-          <span>Control Financiero · Ser Humano</span>
-        </div>
+        <PrintFooter perfil={perfil} />
       </div>
     </>
   );

@@ -1,5 +1,5 @@
-import Image from "next/image";
 import LoginForm from "./login-form";
+import MarcaLogin from "@/components/marca-login";
 
 export default async function LoginPage({
   searchParams,
@@ -11,10 +11,7 @@ export default async function LoginPage({
   return (
     <main className="flex-1 flex items-center justify-center bg-paper px-4 py-10">
       <div className="w-full max-w-[380px]">
-        <div className="flex flex-col items-center gap-2 mb-6">
-          <Image src="/logo-color.png" alt="Ser Humano" width={210} height={90} priority />
-          <h1 className="text-[15px] font-bold text-ink leading-tight">Control Financiero</h1>
-        </div>
+        <MarcaLogin />
         <div className="card">
           <div className="card-h">
             <h2>Iniciar sesión</h2>
@@ -26,7 +23,7 @@ export default async function LoginPage({
                 {motivo && <div className="mt-1 opacity-70">Detalle técnico: {motivo}</div>}
               </div>
             )}
-            <LoginForm next={next || "/cuentas"} />
+            <LoginForm next={next || "/dashboard"} />
           </div>
         </div>
       </div>

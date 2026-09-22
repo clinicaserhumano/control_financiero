@@ -1,14 +1,11 @@
-import Image from "next/image";
 import RecuperarForm from "./recuperar-form";
+import MarcaLogin from "@/components/marca-login";
 
 export default function RecuperarPage() {
   return (
     <main className="flex-1 flex items-center justify-center bg-paper px-4 py-10">
       <div className="w-full max-w-[380px]">
-        <div className="flex flex-col items-center gap-2 mb-6">
-          <Image src="/logo-color.png" alt="Ser Humano" width={210} height={90} priority />
-          <h1 className="text-[15px] font-bold text-ink leading-tight">Control Financiero</h1>
-        </div>
+        <MarcaLogin />
         <div className="card">
           <div className="card-h">
             <h2>Recuperar contraseña</h2>
