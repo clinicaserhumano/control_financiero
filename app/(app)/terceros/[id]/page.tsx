@@ -101,7 +101,7 @@ export default async function TerceroDetallePage({
           </div>
           <div className="text-right">
             <div className="text-[11px] uppercase tracking-wide text-muted font-bold">Saldo x pagar</div>
-            <div className="text-2xl font-extrabold tabular-nums">{money(pendiente)}</div>
+            <div className={"text-2xl font-extrabold tabular-nums" + (pendiente < 0 ? " text-danger" : "")}>{money(pendiente)}</div>
           </div>
           <div className="flex flex-col gap-2">
             <ToggleActivoButton id={tercero.id} activo={tercero.activo} />

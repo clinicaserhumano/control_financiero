@@ -23,7 +23,15 @@ type MovConNombres = MovimientoFinanciero & {
   tercero: { nombre: string; apellido: string | null } | null;
 };
 
-type Fila = { fecha: string; concepto: string; valor: number | null; abono: number | null; saldo: number; obs: string };
+type Fila = {
+  fecha: string;
+  concepto: string;
+  valor: number | null;
+  abono: number | null;
+  saldo: number;
+  obs: string;
+  esCorreccion?: boolean;
+};
 
 export default async function ReportesPage({
   searchParams,
@@ -118,6 +126,26 @@ export default async function ReportesPage({
     const filasTerceroCompletas: Fila[] = [];
     let saldo = 0;
     for (const m of lista) {
+      saldo += Number(m.monto);
+
+      // Un monto negativo es una corrección (se le pagó de más a esta
+      // persona): es un crédito a favor de la clínica, así que se muestra
+      // como abono en vez de cargo — sin importar su estado, porque no es
+      // un pago con fecha propia, es un ajuste que ya reduce el saldo desde
+      // que se registra.
+      if (Number(m.monto) < 0) {
+        filasTerceroCompletas.push({
+          fecha: m.fecha,
+          concepto: m.concepto || "—",
+          valor: null,
+          abono: Math.abs(Number(m.monto)),
+          saldo,
+          obs: m.estado === "confirmado" ? "Corrección aplicada" : "Corrección pendiente de aplicar",
+          esCorreccion: true,
+        });
+        continue;
+      }
+
       const horasInfo = horasPorMovimiento.get(m.id);
       const horasAprox = terceroSeleccionado?.precio_hora ? Number(m.monto) / terceroSeleccionado.precio_hora : null;
       const obsCargo = horasInfo
@@ -127,7 +155,6 @@ export default async function ReportesPage({
           : horasAprox
             ? `${horasAprox.toFixed(2)} h`
             : "—";
-      saldo += Number(m.monto);
       filasTerceroCompletas.push({ fecha: m.fecha, concepto: m.concepto || "—", valor: Number(m.monto), abono: null, saldo, obs: obsCargo });
 
       if (m.estado === "confirmado") {
@@ -405,7 +432,7 @@ export default async function ReportesPage({
                 {resumen.etiquetas.map((e) => (
                   <div className="stat" key={e.label}>
                     <div className="lbl">{e.label}</div>
-                    <div className="val">{e.valor}</div>
+                    <div className={"val" + (e.valor.startsWith("-") ? " text-danger" : "")}>{e.valor}</div>
                   </div>
                 ))}
               </div>
@@ -503,8 +530,10 @@ export default async function ReportesPage({
                               <td>{fmtDate(f.fecha)}</td>
                               <td className="text-[12px] text-muted">{f.concepto}</td>
                               <td className="td-num">{f.valor != null ? money(f.valor) : ""}</td>
-                              <td className="td-num text-primary-dark">{f.abono != null ? money(f.abono) : ""}</td>
-                              <td className="td-num font-bold">{money(f.saldo)}</td>
+                              <td className={"td-num " + (f.esCorreccion ? "text-danger font-bold" : "text-primary-dark")}>
+                                {f.abono != null ? money(f.abono) : ""}
+                              </td>
+                              <td className={"td-num font-bold " + (f.saldo < 0 ? "text-danger" : "")}>{money(f.saldo)}</td>
                               <td className="text-[12px] text-muted">{f.obs}</td>
                             </tr>
                           ))

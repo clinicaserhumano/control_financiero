@@ -64,6 +64,7 @@ export default function PrintStyles({ tamano }: { tamano: "A5" | "A4" }) {
       table.reporte.detalle-mov td, table.reporte.detalle-mov th { overflow-wrap: break-word; word-break: break-word; }
       tr.grupo td { background: #f6f5f0; font-weight: 800; font-size: 11px; padding-top: 9px; padding-bottom: 9px; border-bottom: 1px solid #2B2420; }
       .rt { text-align: right; font-family: 'Courier New', monospace; white-space: nowrap; }
+      .danger { color: #c0392b; }
       tr.total td { background: #fff; color: #2B2420; font-weight: 800; font-size: 12px; border-top: 2px solid #2B2420; border-bottom: none; }
 
       .sum { display: flex; gap: 22px; margin: 10px 0 4px; font-size: 11px; flex-wrap: wrap; }

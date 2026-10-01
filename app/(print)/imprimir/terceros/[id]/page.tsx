@@ -16,7 +16,7 @@ type MovConNombres = MovimientoFinanciero & { tipo_movimiento: { nombre: string 
 // $0.00 justo después de pagarse, igual que un estado de cuenta real. Un
 // movimiento todavía pendiente solo aporta su fila de cargo, y ese saldo
 // que no vuelve a bajar es exactamente el saldo por pagar.
-type Fila = { fecha: string; concepto: string; valor: number | null; abono: number | null; saldo: number; obs: string };
+type Fila = { fecha: string; concepto: string; valor: number | null; abono: number | null; saldo: number; obs: string; esCorreccion?: boolean };
 
 export default async function ImprimirTerceroPage({
   params,
@@ -69,6 +69,24 @@ export default async function ImprimirTerceroPage({
   let saldo = 0;
   const filas: Fila[] = [];
   for (const m of lista) {
+    saldo += Number(m.monto);
+
+    // Un monto negativo es una corrección (se le pagó de más a esta
+    // persona): es un crédito a favor de la clínica, así que se muestra
+    // como abono en vez de cargo — ver el mismo criterio en reportes/page.tsx.
+    if (Number(m.monto) < 0) {
+      filas.push({
+        fecha: m.fecha,
+        concepto: m.concepto || "—",
+        valor: null,
+        abono: Math.abs(Number(m.monto)),
+        saldo,
+        obs: m.estado === "confirmado" ? "Corrección aplicada" : "Corrección pendiente de aplicar",
+        esCorreccion: true,
+      });
+      continue;
+    }
+
     const horasInfo = horasPorMovimiento.get(m.id);
     // Cargos importados de antes de usar la bitácora no tienen semanas
     // ligadas para sacar las horas reales — se estiman a partir del monto
@@ -81,7 +99,6 @@ export default async function ImprimirTerceroPage({
         : horasAprox
           ? `${horasAprox.toFixed(2)} h`
           : "—";
-    saldo += Number(m.monto);
     filas.push({ fecha: m.fecha, concepto: m.concepto || "—", valor: Number(m.monto), abono: null, saldo, obs: obsCargo });
 
     if (m.estado === "confirmado") {
@@ -167,8 +184,8 @@ export default async function ImprimirTerceroPage({
                   <td>{fmtDate(f.fecha)}</td>
                   <td>{f.concepto}</td>
                   <td className="rt">{f.valor != null ? money(f.valor) : ""}</td>
-                  <td className="rt">{f.abono != null ? money(f.abono) : ""}</td>
-                  <td className="rt">{money(f.saldo)}</td>
+                  <td className={"rt" + (f.esCorreccion ? " danger" : "")}>{f.abono != null ? money(f.abono) : ""}</td>
+                  <td className={"rt" + (f.saldo < 0 ? " danger" : "")}>{money(f.saldo)}</td>
                   <td>{f.obs}</td>
                 </tr>
               ))
@@ -179,7 +196,7 @@ export default async function ImprimirTerceroPage({
               </td>
               <td className="rt">{money(totalValor)}</td>
               <td className="rt">{money(totalAbono)}</td>
-              <td className="rt">{money(saldoFinal)}</td>
+              <td className={"rt" + (saldoFinal < 0 ? " danger" : "")}>{money(saldoFinal)}</td>
               <td></td>
             </tr>
           </tbody>
@@ -189,7 +206,7 @@ export default async function ImprimirTerceroPage({
           <span>
             Generado el {fmtDate(todayISO())} por {perfil?.alias || perfil?.email || "—"}
           </span>
-          <span>Saldo x pagar (total): {money(saldoPendienteReal)}</span>
+          <span className={saldoPendienteReal < 0 ? "danger" : ""}>Saldo x pagar (total): {money(saldoPendienteReal)}</span>
         </div>
       </div>
     </>

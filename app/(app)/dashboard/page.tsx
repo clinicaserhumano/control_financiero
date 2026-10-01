@@ -130,7 +130,7 @@ export default async function DashboardPage({
         </div>
         <div className="stat">
           <div className="lbl">Pendiente por pagar</div>
-          <div className="val">{money(totalPendiente)}</div>
+          <div className={"val " + (totalPendiente < 0 ? "text-danger" : "")}>{money(totalPendiente)}</div>
         </div>
         <div className="stat">
           <div className="lbl">Saldo en cuentas</div>

@@ -62,7 +62,7 @@ export default async function ImprimirPendienteTerceroPage({ params }: { params:
             <tr>
               <td className="valbox" colSpan={2}>
                 <span className="lbl">Total a pagar</span>
-                <span className="valbig">{money(total)}</span>
+                <span className={"valbig" + (total < 0 ? " danger" : "")}>{money(total)}</span>
               </td>
             </tr>
           </tbody>
@@ -86,7 +86,7 @@ export default async function ImprimirPendienteTerceroPage({ params }: { params:
                 <tr key={m.id}>
                   <td>{fmtDate(m.fecha)}</td>
                   <td>{m.concepto || "—"}</td>
-                  <td className="rt">{money(m.monto)}</td>
+                  <td className={"rt" + (Number(m.monto) < 0 ? " danger" : "")}>{money(m.monto)}</td>
                 </tr>
               ))
             )}
@@ -95,7 +95,7 @@ export default async function ImprimirPendienteTerceroPage({ params }: { params:
                 <td colSpan={2} style={{ textAlign: "right" }}>
                   TOTAL
                 </td>
-                <td className="rt">{money(total)}</td>
+                <td className={"rt" + (total < 0 ? " danger" : "")}>{money(total)}</td>
               </tr>
             )}
           </tbody>
