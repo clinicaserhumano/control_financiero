@@ -7,8 +7,12 @@ import type { DiaSemana, MovimientoFinanciero } from './types';
    FORMATO DE NÚMEROS Y FECHAS
    ============================================================ */
 
+// Negativo: "-$124.11" (signo antes del $), no "$-124.11" — toLocaleString
+// solo mete el signo antes del número, no antes del símbolo de moneda.
 export function money(n: number | null | undefined): string {
-  return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const v = Number(n || 0);
+  const signo = v < 0 ? '-' : '';
+  return signo + '$' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 // iso: 'AAAA-MM-DD' -> 'DD/MM/AAAA'

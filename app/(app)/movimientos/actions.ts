@@ -82,7 +82,10 @@ function leerAjustes(formData: FormData, montoConIVA: number, montoSinIVA: numbe
     retencion = Math.round(montoSinIVA * (pct / 100) * 100) / 100;
   }
 
-  if ((descuento || 0) + (retencion || 0) >= montoConIVA) {
+  // Si montoConIVA es negativo o cero (una corrección por pago de más — ver
+  // "es_correccion" en crearMovimiento), esta comparación no aplica: ahí no
+  // hay descuento/retención que validar contra un valor a pagar.
+  if (montoConIVA > 0 && (descuento || 0) + (retencion || 0) >= montoConIVA) {
     return { ok: false, error: "El descuento y la retención juntos no pueden ser mayores o iguales al valor a pagar." };
   }
   return { ok: true, descuento, retencion, observaciones };
@@ -124,11 +127,16 @@ export async function crearMovimiento(_prev: MovimientoFormState, formData: Form
   const cuentaId = String(formData.get("cuenta_id") || "") || null;
   const fechaPagoForm = String(formData.get("fecha_pago") || "");
   const redirectTo = String(formData.get("redirect_to") || `/movimientos?tipo=${tipo}`);
+  // Corrección: a esta persona se le pagó de más (ej. un cheque duplicado) y
+  // nos debe ese valor — se guarda como un egreso en negativo, para que se
+  // reste sola del saldo por pagar y del próximo pago real que se le haga.
+  const esCorreccion = tipo === "egreso" && formData.get("es_correccion") === "si";
 
   if (tipo !== "ingreso" && tipo !== "egreso") return { error: "Tipo de movimiento inválido." };
   if (!tipoMovimientoId) return { error: "Selecciona el tipo de movimiento." };
   if (isNaN(monto) || monto <= 0) return { error: "Ingresa un monto válido." };
   if (!fecha) return { error: "Ingresa la fecha." };
+  if (esCorreccion && !terceroId) return { error: "Una corrección debe estar asociada a una persona de Personal." };
 
   const supabase = await createClient();
   const referencia = leerReferencia(formData);
@@ -137,11 +145,13 @@ export async function crearMovimiento(_prev: MovimientoFormState, formData: Form
   if (errorCampos) return { error: errorCampos };
   if (confirmarAhora && tipoMovimiento.requiere_cuenta && !cuentaId) return { error: "Selecciona la cuenta." };
 
-  let montoFinal = monto;
+  let montoFinal = esCorreccion ? -monto : monto;
   let descuento: number | null = null;
   let retencion: number | null = null;
   let observaciones: string | null = null;
-  if (tipo === "egreso" && confirmarAhora) {
+  // El IVA/descuento/retención no tienen sentido sobre una corrección (no es
+  // un pago con forma de pago e impuestos, es un ajuste de saldo).
+  if (tipo === "egreso" && confirmarAhora && !esCorreccion) {
     const montoConIVA = aplicarIVA(formData, monto);
     const r = leerAjustes(formData, montoConIVA, monto);
     if (!r.ok) return { error: r.error };

@@ -100,6 +100,8 @@ export default function FormularioMovimiento(props: Props) {
   const [incluirIVA, setIncluirIVA] = useState(false);
   const [retencionPct, setRetencionPct] = useState("");
   const [concepto, setConcepto] = useState(props.modo === "confirmar" ? props.movimiento.concepto ?? "" : "");
+  const [terceroId, setTerceroId] = useState(props.modo === "crear" && props.terceroFijo ? props.terceroFijo.id : "");
+  const [esCorreccion, setEsCorreccion] = useState(false);
 
   // Al marcar/desmarcar "Incluir IVA" se agrega o quita el sufijo "+ IVA" del
   // concepto automáticamente, para que quede visible en el comprobante sin
@@ -114,10 +116,17 @@ export default function FormularioMovimiento(props: Props) {
 
   const letras = (() => {
     const v = parseFloat(monto);
-    return !isNaN(v) && v >= 0 ? numeroALetras(v) : "—";
+    if (isNaN(v) || v < 0) return "—";
+    return esCorreccion ? `MENOS ${numeroALetras(v)} (se resta del saldo)` : numeroALetras(v);
   })();
 
   const esEgreso = props.tipo === "egreso";
+  // Una corrección (pago de más a recuperar) no es un pago con forma de pago
+  // e impuestos — es un ajuste de saldo, así que IVA/descuento/retención no
+  // le aplican. Lo mismo si se está confirmando un pendiente que YA es una
+  // corrección (monto negativo de origen): nada de eso tiene sentido ahí.
+  const movimientoEsNegativo = props.modo === "confirmar" && props.movimiento.monto < 0;
+  const puedeSerCorreccion = props.modo === "crear" && esEgreso && !!(props.terceroFijo || terceroId);
   const requiereCuentaYFecha = props.modo === "confirmar" || props.tipo === "ingreso" || confirmarAhora;
   // El efectivo (u otra forma de pago marcada así en tipos_movimiento) no
   // sale/entra de ninguna cuenta bancaria registrada, así que no debe pedir
@@ -126,7 +135,7 @@ export default function FormularioMovimiento(props: Props) {
   // El descuento solo tiene sentido en el momento de pagar un egreso (a un
   // proveedor, servicios prestados o personal afiliado): confirmando un
   // pendiente, o creando uno que se paga de inmediato.
-  const mostrarDescuento = esEgreso && (props.modo === "confirmar" || confirmarAhora);
+  const mostrarDescuento = esEgreso && (props.modo === "confirmar" || confirmarAhora) && !esCorreccion && !movimientoEsNegativo;
   // El IVA solo aplica a pagos de Personal por Servicios prestados (bitácora
   // por horas) — cada fila nueva de tipos_movimiento sigue sin tocar esto,
   // porque no es una forma de pago sino un recargo sobre el valor a pagar.
@@ -261,7 +270,13 @@ export default function FormularioMovimiento(props: Props) {
                       <label className="flabel" htmlFor="tercero_id">
                         A favor de — Personal (opcional)
                       </label>
-                      <select id="tercero_id" name="tercero_id" className="finput">
+                      <select
+                        id="tercero_id"
+                        name="tercero_id"
+                        value={terceroId}
+                        onChange={(e) => setTerceroId(e.target.value)}
+                        className="finput"
+                      >
                         <option value="">— Ninguno —</option>
                         {(props.terceros ?? []).map((t) => (
                           <option key={t.id} value={t.id}>
@@ -286,6 +301,26 @@ export default function FormularioMovimiento(props: Props) {
                 )
               )}
               {props.terceroFijo && <input type="hidden" name="tercero_id" value={props.terceroFijo.id} />}
+
+              {puedeSerCorreccion && (
+                <div className="field">
+                  <label className="flex items-center gap-2 cursor-pointer text-[12.5px] font-semibold text-ink">
+                    <input
+                      type="checkbox"
+                      name="es_correccion"
+                      value="si"
+                      checked={esCorreccion}
+                      onChange={(e) => setEsCorreccion(e.target.checked)}
+                    />
+                    Es una corrección — a esta persona se le pagó de más
+                  </label>
+                  <div className="fhint">
+                    Para cuando hay un pago duplicado o de más por error: escribe el valor de más que se le pagó
+                    (en positivo) y se guarda en negativo — se resta sola del saldo por pagar y del próximo pago
+                    real que se le haga.
+                  </div>
+                </div>
+              )}
 
               {esEgreso && !props.terceroFijo && (
                 <div className="field">

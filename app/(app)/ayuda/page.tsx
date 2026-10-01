@@ -320,6 +320,12 @@ export default function AyudaPage() {
               ).
             </li>
             <li>
+              <b>Es una corrección — a esta persona se le pagó de más</b> (aparece al elegir una persona de
+              Personal): para cuando hay un pago duplicado o de más por error. Escribe el valor de más en positivo
+              y el sistema lo guarda en negativo — se resta sola del saldo por pagar de esa persona y de su próximo
+              pago real (combínalo con el siguiente pago desde su ficha o Cuentas por Pagar).
+            </li>
+            <li>
               <b>Cuenta y Fecha de pago:</b> igual que en Ingresos, pero si el Tipo de movimiento es Efectivo, no se
               pide cuenta — el efectivo no sale de ninguna cuenta bancaria registrada. Si eliges Cheque, además pide
               el <b>N° de cheque</b> (queda guardado y es lo que arma el N° de egreso — ver más abajo).
